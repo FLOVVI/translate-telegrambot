@@ -6,7 +6,7 @@ from telebot import types
 class Language:
     lang = "en"
 l = Language()
-bot = telebot.TeleBot("5346709603:AAFoBDCnJOSE98LXRGuxNX72WgBe368SWqI")    
+bot = telebot.TeleBot("token")    
 @bot.message_handler(commands=["start"])
 def start(message, res=False):
     markup=types.ReplyKeyboardMarkup(resize_keyboard=True)
