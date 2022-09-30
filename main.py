@@ -22,16 +22,6 @@ l = Language()
 bot = telebot.TeleBot(r.token)
 
 
-@bot.message_handler(commands=["analysis"])
-def spelling(message):
-    if message.chat.id == 1162855035:
-        an.removing_duplicate_id()
-        bot.send_message(message.chat.id,
-                         f"{an.how_many_people()}\n\n{an.frequent_language()}\n\n{an.frequent_spelling()}")
-    else:
-        print("Кто-то знает секретную команду")
-
-
 @bot.message_handler(commands=["spelling"])
 def spelling(message):
     con = sqlite3.connect('translatebot.db')
