@@ -21,8 +21,8 @@ def frequent_language():
     con = sqlite3.connect('translatebot.db')
     cursor = con.cursor()
     cursor.execute("SELECT language FROM tableone")
-    occurence_count = Counter(cursor.fetchall())
-    counter = occurence_count.most_common(1)[0][0]
+    occurrence_count = Counter(cursor.fetchall())
+    counter = occurrence_count.most_common(1)[0][0]
     counter = counter[0]
     a = LANGUAGES.get(counter)
     result = translator.translate(a.title(), dest="ru")
@@ -36,8 +36,8 @@ def frequent_spelling():
     con = sqlite3.connect('translatebot.db')
     cursor = con.cursor()
     cursor.execute("SELECT spelling FROM tableone")
-    occurence_count = Counter(cursor.fetchall())
-    counter = occurence_count.most_common(1)[0][0]
+    occurrence_count = Counter(cursor.fetchall())
+    counter = occurrence_count.most_common(1)[0][0]
     counter = str(counter)
     counter = counter.replace('(', '')
     counter = counter.replace(')', '')
