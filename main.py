@@ -215,8 +215,8 @@ def handle_document(message):
         # File path
         src = message.document.file_name
         # File translate
-        doc = document_translate(message.from_user.id, downloaded_file, src)
-        if not doc:
+        document = document_translate(message.from_user.id, downloaded_file, src)
+        if not document:
             bot.send_message(message.chat.id, "Неподдерживаемый тип файла")
         # No errors
         else:
