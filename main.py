@@ -29,6 +29,7 @@ def inline_button(page):
         language1 = types.InlineKeyboardButton("Русский", callback_data='ru')
         language2 = types.InlineKeyboardButton("Английский", callback_data='en')
         language3 = types.InlineKeyboardButton("Немецкий", callback_data='de')
+        
         markup.add(language1)
         markup.add(language2)
         markup.add(language3)
@@ -58,6 +59,7 @@ def inline_button(page):
         language10 = types.InlineKeyboardButton("Китайский", callback_data='zh-cn')
         language11 = types.InlineKeyboardButton("Японский", callback_data='ja')
         language12 = types.InlineKeyboardButton("Корейский", callback_data='ko')
+        
         markup.add(language10)
         markup.add(language11)
         markup.add(language12)
@@ -67,6 +69,7 @@ def inline_button(page):
         language13 = types.InlineKeyboardButton("Болгарский", callback_data='bg')
         language14 = types.InlineKeyboardButton("Сербский", callback_data='sr')
         language15 = types.InlineKeyboardButton("Словацкий", callback_data='sk')
+        
         markup.add(language13)
         markup.add(language14)
         markup.add(language15)
