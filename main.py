@@ -36,7 +36,7 @@ def inline_button(page):
         markup.add(previous_page, which_page, next_page)
     if page == 2:
         # page 2
-        language4 = types.InlineKeyboardButton("Беларусский", callback_data='be')
+        language4 = types.InlineKeyboardButton("Белорусский", callback_data='be')
         language5 = types.InlineKeyboardButton("Украинский", callback_data='uk')
         language6 = types.InlineKeyboardButton("Армянский", callback_data='hy')
 
