@@ -6,3 +6,4 @@ https://t.me/flwTranslate_bot
 • Automatic correction of grammatical errors from Russian, English, Ukrainian
 • Scanning and translation from photo
 • To run the bot, you need to create a database
+• Word of the day based on user translations
