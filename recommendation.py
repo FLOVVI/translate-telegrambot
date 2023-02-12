@@ -45,3 +45,4 @@ class Word:
     @staticmethod
     def request(self):
         session = requests.Session()
+        #helloworld
