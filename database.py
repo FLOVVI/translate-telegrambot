@@ -56,6 +56,8 @@ def save_value(user, **kwargs):
         save_cursor.execute("UPDATE tableone SET page = ? WHERE id = ?", (kwargs['page'], user,))
     if 'code' in kwargs:
         save_cursor.execute("UPDATE tableone SET code = ? WHERE id = ?", (kwargs['code'], user,))
+    if 'get_word' in kwargs:
+        save_cursor.execute("UPDATE tableone SET get_word = ? WHERE id = ?", (kwargs['get_word'], user,))
     save_connect.commit()
 
 
