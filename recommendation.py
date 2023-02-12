@@ -43,6 +43,5 @@ class Word:
                 file.write(f'{word_en} ')
 
     @staticmethod
-    def request(self):
+    def request():
         session = requests.Session()
-        #helloworld
