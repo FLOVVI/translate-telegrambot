@@ -1,7 +1,7 @@
 import sqlite3
 from collections import Counter
 from translator import language_text
-from request import get_cpu_usage
+from cpu import get_cpu_usage
 
 con = sqlite3.connect('translatebot.db')
 cursor = con.cursor()
