@@ -1,6 +1,10 @@
 import random
+import requests
+from bs4 import BeautifulSoup as bs
 from translator import Translate
 from nltk.corpus import wordnet
+
+URL = 'https://www.generatormix.com/synonym-generator'
 
 
 def generate_code():
