@@ -1,15 +1,14 @@
 import os
-import datetime
 
 import telebot
 from telebot import types
 
+from analysis import statistic
 from config import token, owner_id
 from database import *
-from translator import Translate, language_text
-from analysis import statistic
 from other_translate import document_translate, picture_translate
-from recommendation import *
+from recommendation import Word
+from translator import Translate, language_text
 
 print("Active")
 
@@ -258,7 +257,7 @@ def handle_text(message):
 
     # memorization for word of the day
     if len(text.split()) == 1:
-        word_memorization(text, get_value.get_code())
+        Word().word_memorization(text, get_value.get_code())
 
     # translation with spell check
     if get_value.get_spelling():
