@@ -34,6 +34,11 @@ class Database:
         get_connect = sqlite3.connect('translatebot.db')
         get_cursor = get_connect.cursor()
         return get_cursor.execute("SELECT code FROM tableone WHERE id = ?", (self.user,)).fetchone()[0]
+    
+    def get_word(self) -> int:
+        get_connect = sqlite3.connect('translatebot.db')
+        get_cursor = get_connect.cursor()
+        return get_cursor.execute("SELECT get_word FROM tableone WHERE id = ?", (self.user,)).fetchone()[0]
 
     def get_delete_user(self) -> bool:
         delete_con = sqlite3.connect('translatebot.db')
