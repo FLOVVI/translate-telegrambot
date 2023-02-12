@@ -5,9 +5,13 @@ from nltk.corpus import wordnet
 
 def generate_code():
     letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    code = ''
-    for i in range(4):
-        code += random.choice(letters)
+    repeat = [i[0] for i in sqlite3.connect('translatebot.db').cursor().execute('SELECT code FROM tableone').fetchall()]
+    while True:
+        code = ''
+        for i in range(4):
+            code += random.choice(letters)
+        if code not in repeat:
+            break
     return code
 
 
