@@ -5,4 +5,4 @@ https://t.me/flwTranslate_bot
 • Ability to translate from any language into n available ones
 • Automatic correction of grammatical errors from Russian, English, Ukrainian
 • Scanning and translation from photo
-• Word of the day based on user translations
+• To run the bot, you need to create a database

@@ -1,5 +1,4 @@
 import sqlite3
-from recommendation import generate_code
 
 
 class Database:
@@ -8,7 +7,7 @@ class Database:
         if not delete:
             search_user(user)
         # Other
-        self.max_page = 4
+        ...
 
     def get_language(self) -> str:
         get_connect = sqlite3.connect('translatebot.db')
@@ -30,16 +29,6 @@ class Database:
         get_cursor = get_connect.cursor()
         return get_cursor.execute("SELECT page FROM tableone WHERE id = ?", (self.user,)).fetchone()[0]
 
-    def get_code(self) -> int:
-        get_connect = sqlite3.connect('translatebot.db')
-        get_cursor = get_connect.cursor()
-        return get_cursor.execute("SELECT code FROM tableone WHERE id = ?", (self.user,)).fetchone()[0]
-    
-    def get_word(self) -> int:
-        get_connect = sqlite3.connect('translatebot.db')
-        get_cursor = get_connect.cursor()
-        return get_cursor.execute("SELECT get_word FROM tableone WHERE id = ?", (self.user,)).fetchone()[0]
-
     def get_delete_user(self) -> bool:
         delete_con = sqlite3.connect('translatebot.db')
         delete_cursor = delete_con.cursor()
@@ -59,10 +48,6 @@ def save_value(user, **kwargs):
         save_cursor.execute("UPDATE tableone SET first_start = ? WHERE id = ?", (kwargs['first_start'], user,))
     if 'page' in kwargs:
         save_cursor.execute("UPDATE tableone SET page = ? WHERE id = ?", (kwargs['page'], user,))
-    if 'code' in kwargs:
-        save_cursor.execute("UPDATE tableone SET code = ? WHERE id = ?", (kwargs['code'], user,))
-    if 'get_word' in kwargs:
-        save_cursor.execute("UPDATE tableone SET get_word = ? WHERE id = ?", (kwargs['get_word'], user,))
     save_connect.commit()
 
 
@@ -80,7 +65,7 @@ def search_table():
     if len(search_cursor.execute(
             "SELECT name FROM sqlite_master WHERE type='table' and name='tableone'").fetchall()) == 0:
         search_cursor.execute(
-            "CREATE TABLE tableone(id INT, language STRING, spelling BOOLEAN, first_start BOOLEAN, page INT, code STRING)")
+            "CREATE TABLE tableone(id INT, language TEXT, spelling BOOLEAN, first_start BOOLEAN, page INT)")
 
 
 def search_user(user):
@@ -88,6 +73,6 @@ def search_user(user):
     search_cursor = search_connect.cursor()
 
     if search_cursor.execute("SELECT id FROM tableone WHERE id = ?", (user,)).fetchone() is None:
-        search_cursor.execute("INSERT INTO tableone VALUES (?, ?, ?, ?, ?, ?)", (user, "en", False, True, 1, generate_code()))
+        search_cursor.execute("INSERT INTO tableone VALUES (?, ?, ?, ?, ?)", (user, "en", False, True, 1))
 
     search_connect.commit()

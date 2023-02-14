@@ -51,19 +51,14 @@ class Translate:
         """
         # Corrected text
         spelling_text = self.spelling.spelled(text)
+        errors_found = True if spelling_text != text else False
         # Translation of the corrected text
         result = self.translate(spelling_text, language)
-        if spelling_text != text:
-            errors_found = True
-            if sorting:
-                spelling_text = self.spelling_sorting(spelling_text, text)
-        else:
-            errors_found = False
-
-        dictionary = {'result': result,
+        if spelling_text != text and sorting:
+            spelling_text = self.spelling_sorting(spelling_text, text)
+        return {'result': result,
                 'spelling_text': f"В сообщении найдены ошибки. Исправленный текст:\n\n{spelling_text}",
                 'errors_found': errors_found}
-        return dictionary
 
     @staticmethod
     def spelling_sorting(spelling_text, text) -> str:
@@ -75,10 +70,6 @@ class Translate:
         for i in new_mas:
             corrected_text[corrected_text.index(i)] = f"`{i}`"
         return " ".join(corrected_text)
-
-    def word_of_the_day_translate(self, word):
-        # translation without using smart translation
-        return self.translator.translate(word, dest="en").text
 
 
 def language_text(language) -> str:
@@ -93,3 +84,6 @@ def language_text(language) -> str:
     else:
         # .split()[0] for two-word languages (Японский язык)
         return Translator().translate(LANGUAGES.get(language), dest="ru").text.split()[0].title()
+
+
+# print(Translate().auto_spelling(input(), "en").spelling_text)
