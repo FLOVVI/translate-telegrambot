@@ -76,25 +76,14 @@ def inline_button(page):
     return markup
 
 
-def logs(user, text, type_info='info'):
-    time = datetime.datetime.now().strftime("%H:%M:%S")
-    with open('logs.txt', 'a+', encoding='utf-8') as file:
-        if type_info == 'error':
-            file.write(f'[ERROR][{time}][{user}] {text}\n')
-        else:
-            file.write(f'[INFO][{time}][{user}] {text}\n')
-
-
 # First launch and language change
 @bot.message_handler(commands=["start", "language"])
 def start(message):
     get_value = Database(message.from_user.id)
     if get_value.get_first_start():
-        logs(message.from_user.id, 'Новый пользователь')
         bot.send_message(message.chat.id, 'Выберите на какой язык переводить:', reply_markup=inline_button(get_value.get_page()))
         save_value(message.from_user.id, first_start=False)
     else:
-        logs(message.from_user.id, 'Меняет язык')
         markup = types.InlineKeyboardMarkup()
         change_language = types.InlineKeyboardButton("Сменить язык", callback_data='menu')
         markup.add(change_language)
@@ -162,7 +151,6 @@ def callback_query(call):
             else:
                 page = 1
             save_value(call.from_user.id, page=page)
-            logs(call.from_user.id, 'Перешел на следующую страницу')
 
         if req[0] == 'back':
             if page > 1:
@@ -170,13 +158,11 @@ def callback_query(call):
             else:
                 page = max_page
             save_value(call.from_user.id, page=page)
-            logs(call.from_user.id, 'Перешел на прошлую страницу')
 
         bot.edit_message_reply_markup(call.from_user.id, call.message.message_id, reply_markup=inline_button(page))
 
     # Reestablish
     elif req[0] == 'res':
-        logs(call.from_user.id, 'Восстановил данные')
         # Get_Database automatically restores data
         markup = types.InlineKeyboardMarkup()
         delete = types.InlineKeyboardButton("Удалить", callback_data='del')
@@ -185,7 +171,6 @@ def callback_query(call):
                               reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
     # Delete
     elif req[0] == 'del':
-        logs(call.from_user.id, 'Перешел на прошлую страницу')
         delete_data(call.from_user.id)
         markup = types.InlineKeyboardMarkup()
         reestablish = types.InlineKeyboardButton("Восстановить", callback_data='res')
@@ -195,7 +180,6 @@ def callback_query(call):
 
     # spelling on
     elif req[0] == 'on':
-        logs(call.from_user.id, 'Включил автоматическую проверку текста')
         save_value(call.from_user.id, spelling=True)
         markup = types.InlineKeyboardMarkup()
         spelling_on = types.InlineKeyboardButton("Выключить", callback_data='off')
@@ -204,7 +188,6 @@ def callback_query(call):
                               reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
     # spelling off
     elif req[0] == 'off':
-        logs(call.from_user.id, 'Выключил автоматическую проверку текста')
         save_value(call.from_user.id, spelling=False)
         markup = types.InlineKeyboardMarkup()
         spelling_of = types.InlineKeyboardButton("Включить", callback_data='on')
@@ -214,7 +197,6 @@ def callback_query(call):
                               reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
     # Choice language
     else:
-        logs(call.from_user.id, f'Сменил язык на {req[0]}')
         save_value(call.from_user.id, language=req[0])
         markup = types.InlineKeyboardMarkup()
         change_language = types.InlineKeyboardButton("Сменить язык", callback_data='menu')
@@ -236,17 +218,14 @@ def handle_document(message):
         # File translate
         document = document_translate(message.from_user.id, downloaded_file, src)
         if not document:
-            logs(message.from_user.id, 'Отправил неподдерживаемый тип файла', type_info='error')
             bot.send_message(message.chat.id, "Неподдерживаемый тип файла")
         # No errors
         else:
             with open("Перевод.txt", 'r', encoding='utf-8') as file:
                 bot.send_document(message.chat.id, file)
-                logs(message.from_user.id, f'Перевел файл. Количество символов: {len(file.read())}')
             os.remove("Перевод.txt")
         os.remove(src)
     except:
-        logs(message.from_user.id, 'Отправил неподдерживаемый файл', type_info='error')
         bot.send_message(message.chat.id, "Неподдерживаемый файл")
 
 
@@ -260,14 +239,12 @@ def handle_photo(message):
         downloaded_file = bot.download_file(file_info.file_path)
         # File translate
         picture = picture_translate(message.from_user.id, downloaded_file)
-        logs(message.from_user.id, f'Перевел картинку. Разрешение: {len(message.photo) - 1}. Размер картинки: {message.photo[len(message.photo) - 1].file_size}')
         bot.send_message(message.chat.id, f"Распознанный текст:\n\n{picture['text_recognition']}\n\nПеревод:\n\n{picture['result']}")
         try:
             os.remove("translate.jpg")
         except FileNotFoundError:
-            logs(message.from_user.id, 'Ошибка с большим количеством фото одновременно', type_info='error')
+            pass
     except:
-        logs(message.from_user.id, 'Ошибка с переводом', type_info='error')
         bot.send_message(message.chat.id, "Неизвестная ошибка, повторите попытку")
 
 
@@ -281,12 +258,8 @@ def handle_text(message):
         message_translation = translate.auto_spelling(message.text.strip(), get_value.get_language())
         if message_translation['errors_found']:
             bot.send_message(message.chat.id, message_translation['spelling_text'], parse_mode="Markdown")
-        logs(message.from_user.id, f'Перевел текст с авто проверкой.')
         bot.send_message(message.chat.id, message_translation['result'])
     else:
         bot.send_message(message.chat.id, translate.translate(message.text.strip(), get_value.get_language()))
-        logs(message.from_user.id, f'Перевел текст без авто проверки.')
 
 bot.polling(none_stop=True, interval=0, timeout=25)
-
-
