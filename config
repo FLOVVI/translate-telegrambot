@@ -1,4 +1,0 @@
-token = "YOUR BOT TOKEN"
-owner_id = "YOUR TELEGRAM ID"
-request_login = "LOGIN FOR pythonanywhere.com"
-request_password = 'PASSWORD FOR pythonanywhere.com'
