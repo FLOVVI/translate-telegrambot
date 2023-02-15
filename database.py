@@ -80,7 +80,7 @@ def search_table():
     if len(search_cursor.execute(
             "SELECT name FROM sqlite_master WHERE type='table' and name='tableone'").fetchall()) == 0:
         search_cursor.execute(
-            "CREATE TABLE tableone(id INT, language STRING, spelling BOOLEAN, first_start BOOLEAN, page INT, code STRING)")
+            "CREATE TABLE tableone(id INT, language STRING, spelling BOOLEAN, first_start BOOLEAN, page INT, code STRING, word)")
 
 
 def search_user(user):
@@ -88,6 +88,6 @@ def search_user(user):
     search_cursor = search_connect.cursor()
 
     if search_cursor.execute("SELECT id FROM tableone WHERE id = ?", (user,)).fetchone() is None:
-        search_cursor.execute("INSERT INTO tableone VALUES (?, ?, ?, ?, ?, ?)", (user, "en", False, True, 1, generate_code()))
+        search_cursor.execute("INSERT INTO tableone VALUES (?, ?, ?, ?, ?, ?, ?)", (user, "en", False, True, 1, generate_code(), False))
 
     search_connect.commit()
