@@ -2,6 +2,7 @@ import sqlite3
 import random
 
 
+# Temporary function
 def generate_code():
     letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     repeat = [i[0] for i in sqlite3.connect('translatebot.db').cursor().execute('SELECT code FROM tableone').fetchall()]
