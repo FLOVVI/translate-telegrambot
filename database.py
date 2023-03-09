@@ -8,7 +8,7 @@ def generate_code():
     repeat = [i[0] for i in sqlite3.connect('translatebot.db').cursor().execute('SELECT code FROM tableone').fetchall()]
     while True:
         code = ''
-        # generate a four-digit code
+        # Generate a four-digit code
         for i in range(4):
             code += random.choice(letters)
         if code not in repeat:
@@ -94,7 +94,7 @@ def search_table():
     if len(search_cursor.execute(
             "SELECT name FROM sqlite_master WHERE type='table' and name='tableone'").fetchall()) == 0:
         search_cursor.execute(
-            "CREATE TABLE tableone(id INT, language STRING, spelling BOOLEAN, first_start BOOLEAN, page INT, code STRING, word BOOLEAN)")
+            "CREATE TABLE tableone (id INT, language STRING, spelling BOOLEAN, first_start BOOLEAN, page INT, code STRING, word BOOLEAN)")
 
 
 def search_user(user):

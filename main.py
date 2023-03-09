@@ -210,6 +210,7 @@ def callback_query(call):
 @bot.message_handler(content_types=['document'])
 def handle_document(message):
     try:
+        bot.send_message(message.chat.id, 'Подождите...')
         # Download file
         file_info = bot.get_file(message.document.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
@@ -225,6 +226,7 @@ def handle_document(message):
                 bot.send_document(message.chat.id, file)
             os.remove("Перевод.txt")
         os.remove(src)
+        bot.delete_message(message.chat.id, message.id + 1)
     except:
         bot.send_message(message.chat.id, "Неподдерживаемый файл")
 
@@ -240,6 +242,7 @@ def handle_photo(message):
         # File translate
         picture = picture_translate(message.from_user.id, downloaded_file)
         bot.send_message(message.chat.id, f"Распознанный текст:\n\n{picture['text_recognition']}\n\nПеревод:\n\n{picture['result']}")
+        bot.delete_message(message.chat.id, message.id + 1)
         try:
             os.remove("translate.jpg")
         except FileNotFoundError:
@@ -251,6 +254,7 @@ def handle_photo(message):
 # Message from user for translation
 @bot.message_handler(content_types=["text"])
 def handle_text(message):
+    bot.send_message(message.chat.id, 'Подождите...')
     get_value = Database(message.from_user.id)
     translate = Translate()
     # translation with spell check
@@ -261,5 +265,6 @@ def handle_text(message):
         bot.send_message(message.chat.id, message_translation['result'])
     else:
         bot.send_message(message.chat.id, translate.translate(message.text.strip(), get_value.get_language()))
+    bot.delete_message(message.chat.id, message.id + 1)
 
 bot.polling(none_stop=True, interval=0, timeout=25)
