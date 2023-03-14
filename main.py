@@ -219,7 +219,7 @@ def handle_document(message):
         # File translate
         document = document_translate(message.from_user.id, downloaded_file, src)
         if not document:
-            bot.send_message(message.chat.id, "Неподдерживаемый тип файла")
+            bot.edit_message_text("Неподдерживаемый тип файла", message.chat.id, message.id + 1)
         # No errors
         else:
             with open("Перевод.txt", 'r', encoding='utf-8') as file:
@@ -228,7 +228,7 @@ def handle_document(message):
         os.remove(src)
         bot.delete_message(message.chat.id, message.id + 1)
     except:
-        bot.send_message(message.chat.id, "Неподдерживаемый файл")
+        bot.edit_message_text("Неподдерживаемый тип файла", message.chat.id, message.id + 1)
 
 
 # Picture translate
@@ -241,14 +241,13 @@ def handle_photo(message):
         downloaded_file = bot.download_file(file_info.file_path)
         # File translate
         picture = picture_translate(message.from_user.id, downloaded_file)
-        bot.send_message(message.chat.id, f"Распознанный текст:\n\n{picture['text_recognition']}\n\nПеревод:\n\n{picture['result']}")
-        bot.delete_message(message.chat.id, message.id + 1)
+        bot.edit_message_text(f"Распознанный текст:\n\n{picture['text_recognition']}\n\nПеревод:\n\n{picture['result']}", message.chat.id, message.id + 1)
         try:
             os.remove("translate.jpg")
         except FileNotFoundError:
             pass
     except:
-        bot.send_message(message.chat.id, "Неизвестная ошибка, повторите попытку")
+        bot.edit_message_text("Произошла неизвестная ошибка. Повторите попытку", message.chat.id, message.id + 1)
 
 
 # Message from user for translation
@@ -261,10 +260,11 @@ def handle_text(message):
     if get_value.get_spelling():
         message_translation = translate.auto_spelling(message.text.strip(), get_value.get_language())
         if message_translation['errors_found']:
-            bot.send_message(message.chat.id, message_translation['spelling_text'], parse_mode="Markdown")
+            bot.edit_message_text(message_translation['spelling_text'], message.chat.id, message.id + 1, parse_mode="Markdown")
         bot.send_message(message.chat.id, message_translation['result'])
     else:
-        bot.send_message(message.chat.id, translate.translate(message.text.strip(), get_value.get_language()))
-    bot.delete_message(message.chat.id, message.id + 1)
+        bot.edit_message_text(translate.translate(message.text.strip(), get_value.get_language()), message.chat.id, message.id + 1)
+
+    # bot.delete_message(message.chat.id, message.id + 1)
 
 bot.polling(none_stop=True, interval=0, timeout=25)
