@@ -14,7 +14,7 @@ print("Active")
 
 search_table()
 bot = telebot.TeleBot(token)
-max_page = 5
+max_page = 4
 
 
 def inline_button(page):
@@ -27,50 +27,30 @@ def inline_button(page):
 
     if page == 1:
         # page 1
-        language1 = types.InlineKeyboardButton("Русский", callback_data='ru')
-        language2 = types.InlineKeyboardButton("Английский", callback_data='en')
-        language3 = types.InlineKeyboardButton("Немецкий", callback_data='de')
-        markup.add(language1)
-        markup.add(language2)
-        markup.add(language3)
+        markup.add(types.InlineKeyboardButton("Русский", callback_data='ru'))
+        markup.add(types.InlineKeyboardButton("Английский", callback_data='en'))
+        markup.add(types.InlineKeyboardButton("Немецкий", callback_data='de'))
         markup.add(previous_page, which_page, next_page)
+
     if page == 2:
         # page 2
-        language4 = types.InlineKeyboardButton("Белорусский", callback_data='be')
-        language5 = types.InlineKeyboardButton("Украинский", callback_data='uk')
-        language6 = types.InlineKeyboardButton("Армянский", callback_data='hy')
-
-        markup.add(language4)
-        markup.add(language5)
-        markup.add(language6)
+        markup.add(types.InlineKeyboardButton("Белорусский", callback_data='be'))
+        markup.add(types.InlineKeyboardButton("Украинский", callback_data='uk'))
+        markup.add(types.InlineKeyboardButton("Казахский", callback_data='kk'))
         markup.add(previous_page, which_page, next_page)
+
     if page == 3:
         # page 3
-        language7 = types.InlineKeyboardButton("Французский", callback_data='fr')
-        language8 = types.InlineKeyboardButton("Испанский", callback_data='es')
-        language9 = types.InlineKeyboardButton("Итальянский", callback_data='it')
-
-        markup.add(language7)
-        markup.add(language8)
-        markup.add(language9)
+        markup.add(types.InlineKeyboardButton("Французский", callback_data='fr'))
+        markup.add(types.InlineKeyboardButton("Испанский", callback_data='es'))
+        markup.add(types.InlineKeyboardButton("Итальянский", callback_data='it'))
         markup.add(previous_page, which_page, next_page)
+
     if page == 4:
         # page 4
-        language10 = types.InlineKeyboardButton("Китайский", callback_data='zh-cn')
-        language11 = types.InlineKeyboardButton("Японский", callback_data='ja')
-        language12 = types.InlineKeyboardButton("Корейский", callback_data='ko')
-        markup.add(language10)
-        markup.add(language11)
-        markup.add(language12)
-        markup.add(previous_page, which_page, next_page)
-    if page == 5:
-        # page 5
-        language13 = types.InlineKeyboardButton("Болгарский", callback_data='bg')
-        language14 = types.InlineKeyboardButton("Сербский", callback_data='sr')
-        language15 = types.InlineKeyboardButton("Словацкий", callback_data='sk')
-        markup.add(language13)
-        markup.add(language14)
-        markup.add(language15)
+        markup.add(types.InlineKeyboardButton("Китайский", callback_data='zh-cn'))
+        markup.add(types.InlineKeyboardButton("Японский", callback_data='ja'))
+        markup.add(types.InlineKeyboardButton("Корейский", callback_data='ko'))
         markup.add(previous_page, which_page, next_page)
 
     return markup
@@ -265,6 +245,5 @@ def handle_text(message):
     else:
         bot.edit_message_text(translate.translate(message.text.strip(), get_value.get_language()), message.chat.id, message.id + 1)
 
-    # bot.delete_message(message.chat.id, message.id + 1)
 
 bot.polling(none_stop=True, interval=0, timeout=25)
