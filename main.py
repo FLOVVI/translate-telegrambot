@@ -239,9 +239,11 @@ def handle_text(message):
     # translation with spell check
     if get_value.get_spelling():
         message_translation = translate.auto_spelling(message.text.strip(), get_value.get_language())
-        if message_translation['errors_found']:
-            bot.edit_message_text(message_translation['spelling_text'], message.chat.id, message.id + 1, parse_mode="Markdown")
-        bot.send_message(message.chat.id, message_translation['result'])
+        if message_translation.errors_found:
+            bot.edit_message_text(message_translation.spelling_text, message.chat.id, message.id + 1, parse_mode="Markdown")
+            bot.send_message(message.chat.id, message_translation.result)
+        else:
+            bot.edit_message_text(message_translation.result, message.chat.id, message.id + 1,)
     else:
         bot.edit_message_text(translate.translate(message.text.strip(), get_value.get_language()), message.chat.id, message.id + 1)
 

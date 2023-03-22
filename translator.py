@@ -56,9 +56,8 @@ class Translate:
         result = self.translate(spelling_text, language)
         if spelling_text != text and sorting:
             spelling_text = self.spelling_sorting(spelling_text, text)
-        return {'result': result,
-                'spelling_text': f"В сообщении найдены ошибки. Исправленный текст:\n\n{spelling_text}",
-                'errors_found': errors_found}
+
+        return AutoSpelling(errors_found, spelling_text, result)
 
     @staticmethod
     def spelling_sorting(spelling_text, text) -> str:
@@ -70,6 +69,18 @@ class Translate:
         for i in new_mas:
             corrected_text[corrected_text.index(i)] = f"`{i}`"
         return " ".join(corrected_text)
+
+
+class AutoSpelling:
+    def __init__(self, errors_found, spelling_text, result):
+        self.errors_found = errors_found
+        self.spelling_text = f"В сообщении найдены ошибки. Исправленный текст:\n\n{spelling_text}"
+        self.result = result
+
+    def __dict__(self):
+        return {'errors_found': self.errors_found,
+                'spelling_text': self.spelling_text,
+                'result': self.result}
 
 
 def language_text(language) -> str:
