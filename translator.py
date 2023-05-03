@@ -23,7 +23,7 @@ class Translate:
 
         """
 
-        text = "Not Text" if text == '' else text
+        text = "No Text" if text == '' else text
 
         result = self.translator.translate(text, dest=language)
 
@@ -86,8 +86,6 @@ class AutoSpelling:
 def language_text(language) -> str:
     if language == 'zh-cn':
         return "Китайский"
-    elif language == 'hy':
-        return "Армянский"
     elif language == 'uk':
         return 'Украинский'
     elif language == 'be':
@@ -95,6 +93,3 @@ def language_text(language) -> str:
     else:
         # .split()[0] for two-word languages (Японский язык)
         return Translator().translate(LANGUAGES.get(language), dest="ru").text.split()[0].title()
-
-
-# print(Translate().auto_spelling(input(), "en").spelling_text)

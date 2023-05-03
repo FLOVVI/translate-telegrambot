@@ -24,35 +24,16 @@ class Database:
         # Other
         self.max_page = 4
 
-    def get_language(self) -> str:
         get_connect = sqlite3.connect('translatebot.db')
         get_cursor = get_connect.cursor()
-        return get_cursor.execute(f'SELECT language FROM tableone WHERE id = {self.user}').fetchone()[0]
 
-    def get_spelling(self) -> bool:
-        get_connect = sqlite3.connect('translatebot.db')
-        get_cursor = get_connect.cursor()
-        return get_cursor.execute(f'SELECT spelling FROM tableone WHERE id = {self.user}').fetchone()[0]
-
-    def get_first_start(self) -> bool:
-        get_connect = sqlite3.connect('translatebot.db')
-        get_cursor = get_connect.cursor()
-        return get_cursor.execute("SELECT first_start FROM tableone WHERE id = ?", (self.user,)).fetchone()[0]
-
-    def get_page(self) -> int:
-        get_connect = sqlite3.connect('translatebot.db')
-        get_cursor = get_connect.cursor()
-        return get_cursor.execute("SELECT page FROM tableone WHERE id = ?", (self.user,)).fetchone()[0]
-
-    def get_code(self) -> int:
-        get_connect = sqlite3.connect('translatebot.db')
-        get_cursor = get_connect.cursor()
-        return get_cursor.execute("SELECT code FROM tableone WHERE id = ?", (self.user,)).fetchone()[0]
-
-    def get_word(self) -> int:
-        get_connect = sqlite3.connect('translatebot.db')
-        get_cursor = get_connect.cursor()
-        return get_cursor.execute("SELECT get_word FROM tableone WHERE id = ?", (self.user,)).fetchone()[0]
+        self.get_language = get_cursor.execute(f'SELECT language FROM tableone WHERE id = {self.user}').fetchone()[0]
+        self.get_spelling = get_cursor.execute(f'SELECT spelling FROM tableone WHERE id = {self.user}').fetchone()[0]
+        self.get_first_start = get_cursor.execute(f'SELECT first_start FROM tableone WHERE id = {self.user}').fetchone()[0]
+        self.get_page = get_cursor.execute(f'SELECT page FROM tableone WHERE id = {self.user}').fetchone()[0]
+        self.get_code = get_cursor.execute(f'SELECT code FROM tableone WHERE id = {self.user}').fetchone()[0]
+        self.get_word = get_cursor.execute(f'SELECT word FROM tableone WHERE id = {self.user}').fetchone()[0]
+        self.state = get_cursor.execute(f'SELECT state FROM tableone WHERE id = {self.user}').fetchone()[0]
 
     def get_delete_user(self) -> bool:
         delete_con = sqlite3.connect('translatebot.db')
@@ -77,6 +58,9 @@ def save_value(user, **kwargs):
         save_cursor.execute("UPDATE tableone SET code = ? WHERE id = ?", (kwargs['code'], user,))
     if 'word' in kwargs:
         save_cursor.execute("UPDATE tableone SET word = ? WHERE id = ?", (kwargs['word'], user,))
+
+    if 'state' in kwargs:
+        save_cursor.execute("UPDATE tableone SET state = ? WHERE id = ?", (kwargs['state'], user,))
     save_connect.commit()
 
 
@@ -91,10 +75,10 @@ def search_table():
     search_connect = sqlite3.connect('translatebot.db')
     search_cursor = search_connect.cursor()
 
-    if len(search_cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' and name='tableone'").fetchall()) == 0:
-        search_cursor.execute(
-            "CREATE TABLE tableone (id INT, language STRING, spelling BOOLEAN, first_start BOOLEAN, page INT, code STRING, word BOOLEAN)")
+    check = search_cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' and name='tableone'").fetchall()
+    if len(check) == 0:
+        search_cursor.execute("CREATE TABLE tableone (id INT, language STRING, spelling BOOLEAN, first_start BOOLEAN, page INT, code STRING, word BOOLEAN, state INT)")
 
 
 def search_user(user):
@@ -102,6 +86,9 @@ def search_user(user):
     search_cursor = search_connect.cursor()
 
     if search_cursor.execute("SELECT id FROM tableone WHERE id = ?", (user,)).fetchone() is None:
-        search_cursor.execute("INSERT INTO tableone VALUES (?, ?, ?, ?, ?, ?, ?)", (user, "en", False, True, 1, generate_code(), False))
+        search_cursor.execute("INSERT INTO tableone VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (user, "en", False, True, 1, generate_code(), False, 0))
 
     search_connect.commit()
+
+
+search_table()
