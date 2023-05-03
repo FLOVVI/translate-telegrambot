@@ -59,7 +59,7 @@ def inline_button(page):
 
 def edit_message(user, chat_id, last_message_id, event):
 
-    while True:
+    for i in range(10000):
         get_value = Database(user)
 
         if get_value.state < 3:
@@ -268,12 +268,7 @@ def handle_photo(message):
 # Message from user for translation
 @bot.message_handler(content_types=["text"])
 def handle_text(message):
-    bot.send_message(message.chat.id, 'Подождите')
-
-    event = Event()
-    th = Thread(target=edit_message, args=(message.from_user.id, message.chat.id, message.id + 1, event))
-    th.start()
-
+    bot.send_message(message.chat.id, 'Подождите...')
     get_value = Database(message.from_user.id)
     translate = Translate()
     # translation with spell check
@@ -286,6 +281,5 @@ def handle_text(message):
             bot.edit_message_text(message_translation.result, message.chat.id, message.id + 1)
     else:
         bot.edit_message_text(translate.translate(message.text.strip(), get_value.get_language), message.chat.id, message.id + 1)
-    event.set()
 
 bot.polling(none_stop=True, interval=0, timeout=25)
