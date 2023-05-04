@@ -58,7 +58,6 @@ def save_value(user, **kwargs):
         save_cursor.execute("UPDATE tableone SET code = ? WHERE id = ?", (kwargs['code'], user,))
     if 'word' in kwargs:
         save_cursor.execute("UPDATE tableone SET word = ? WHERE id = ?", (kwargs['word'], user,))
-
     if 'state' in kwargs:
         save_cursor.execute("UPDATE tableone SET state = ? WHERE id = ?", (kwargs['state'], user,))
     save_connect.commit()
@@ -76,9 +75,17 @@ def search_table():
     search_cursor = search_connect.cursor()
 
     check = search_cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' and name='tableone'").fetchall()
+            "SELECT name FROM sqlite_master WHERE type='table' and name='tableone'").fetchone()
     if len(check) == 0:
-        search_cursor.execute("CREATE TABLE tableone (id INT, language STRING, spelling BOOLEAN, first_start BOOLEAN, page INT, code STRING, word BOOLEAN, state INT)")
+        search_cursor.execute("CREATE TABLE tableone ("
+                              "id INT,"
+                              "language STRING,"
+                              "spelling BOOLEAN,"
+                              "first_start BOOLEAN,"
+                              "page INT,"
+                              "code STRING,"
+                              "word BOOLEAN,"
+                              "state INT)")
 
 
 def search_user(user):
@@ -86,7 +93,8 @@ def search_user(user):
     search_cursor = search_connect.cursor()
 
     if search_cursor.execute("SELECT id FROM tableone WHERE id = ?", (user,)).fetchone() is None:
-        search_cursor.execute("INSERT INTO tableone VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (user, "en", False, True, 1, generate_code(), False, 0))
+        search_cursor.execute("INSERT INTO tableone VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                              (user, "en", False, True, 1, generate_code(), False, 0))
 
     search_connect.commit()
 

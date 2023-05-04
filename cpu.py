@@ -38,4 +38,13 @@ def get_cpu_usage():
     usage_second = soup.find('span', id='id_daily_cpu_usage_percent').text
     usage_max_second = soup.find('span', id='id_daily_cpu_usage_allowance').text
     resets_text = soup.find('span', id="id_daily_cpu_reset_time").text
-    return f"CPU использовано: {usage_percentage}% - {usage_second}/{usage_max_second} секунд. Сброс через {Translator().translate(resets_text, dest='ru').text}"
+    return ServerLoad(usage_percentage, usage_second, usage_max_second, resets_text)
+
+
+class ServerLoad:
+    def __init__(self, usage_percentage, usage_second, usage_max_second, resets_text):
+        self.usage_percentage = usage_percentage
+        self.usage_second = usage_second
+        self.usage_max_second = usage_max_second
+        self.resets_text = resets_text
+        self.statistics_text = f"CPU использовано: {usage_percentage}% - {usage_second}/{usage_max_second} секунд. Сброс через {Translator().translate(resets_text, dest='ru').text}"

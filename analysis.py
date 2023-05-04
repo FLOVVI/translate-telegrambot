@@ -3,15 +3,12 @@ from collections import Counter
 from translator import language_text
 from cpu import get_cpu_usage
 
-con = sqlite3.connect('translatebot.db')
-cursor = con.cursor()
-
 
 def statistic():
-    return f"Статистика бота:\n\n{how_many_people()}\n{frequent_language()}\n{frequent_spelling()}\n{get_cpu_usage()}"
+    return f"Статистика бота:\n\n{number_of_people()}\n{frequent_language()}\n{frequent_spelling()}\n{get_cpu_usage().statistics_text}"
 
 
-def how_many_people():
+def number_of_people():
     con = sqlite3.connect('translatebot.db')
     cursor = con.cursor()
     return f"Всего людей: {len(cursor.execute('SELECT id FROM tableone').fetchall())}"
