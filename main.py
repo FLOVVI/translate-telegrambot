@@ -10,6 +10,7 @@ from database import *
 from translator import Translate, language_text
 from analysis import statistic
 from other_translate import document_translate, picture_translate
+from server import server_load
 
 print("Active")
 
@@ -242,27 +243,30 @@ def handle_document(message):
 # Picture translate
 @bot.message_handler(content_types=['photo'])
 def handle_photo(message):
-    event = Event()
-    try:
-        bot.send_message(message.chat.id, "Подождите")
-
-        th = Thread(target=edit_message, args=(message.from_user.id, message.chat.id, message.id + 1, event))
-        th.start()
-
-        # Download file
-        file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
-        downloaded_file = bot.download_file(file_info.file_path)
-        # File translate
-        picture = picture_translate(message.from_user.id, downloaded_file)
-        event.set()
-        bot.edit_message_text(f"Распознанный текст:\n\n{picture.text_recognition}\n\nПеревод:\n\n{picture.result}", message.chat.id, message.id + 1)
+    if server_load().usage_percentage < 80:
+        event = Event()
         try:
-            os.remove("translate.jpg")
-        except FileNotFoundError:
-            pass
-    except:
-        bot.edit_message_text("Произошла неизвестная ошибка. Повторите попытку", message.chat.id, message.id + 1)
-        event.set()
+            bot.send_message(message.chat.id, "Подождите")
+
+            th = Thread(target=edit_message, args=(message.from_user.id, message.chat.id, message.id + 1, event))
+            th.start()
+
+            # Download file
+            file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
+            downloaded_file = bot.download_file(file_info.file_path)
+            # File translate
+            picture = picture_translate(message.from_user.id, downloaded_file)
+            event.set()
+            bot.edit_message_text(f"Распознанный текст:\n\n{picture.text_recognition}\n\nПеревод:\n\n{picture.result}", message.chat.id, message.id + 1)
+            try:
+                os.remove("translate.jpg")
+            except FileNotFoundError:
+                pass
+        except:
+            bot.edit_message_text("Произошла неизвестная ошибка. Повторите попытку", message.chat.id, message.id + 1)
+            event.set()
+    else:
+        bot.send_message(message.chat.id, 'Сервер перегружен. Пожалуйста повторите попытку позже')
 
 
 # Message from user for translation

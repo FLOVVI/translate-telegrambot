@@ -1,11 +1,11 @@
 import sqlite3
 from collections import Counter
 from translator import language_text
-from cpu import get_cpu_usage
+from server import server_load
 
 
 def statistic():
-    return f"Статистика бота:\n\n{number_of_people()}\n{frequent_language()}\n{frequent_spelling()}\n{get_cpu_usage().statistics_text}"
+    return f"Статистика бота:\n\n{number_of_people()}\n{frequent_language()}\n{frequent_spelling()}\n{server_load().statistics_text}"
 
 
 def number_of_people():
