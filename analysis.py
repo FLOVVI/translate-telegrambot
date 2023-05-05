@@ -30,6 +30,6 @@ def frequent_spelling():
     occurrence_count = Counter(cursor.fetchall())
     counter = str(occurrence_count.most_common(1)[0][0][0])
     if counter == "0":
-        return "Чаще всего у пользователей выключена авто проверка орфографии"
+        return "Чаще всего у пользователей выключена автопроверка орфографии"
     else:
-        return "Чаще всего у пользователей включена авто проверка орфографии"
+        return "Чаще всего у пользователей включена автопроверка орфографии"

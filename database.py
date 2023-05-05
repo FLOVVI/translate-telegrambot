@@ -21,8 +21,6 @@ class Database:
         self.user = user
         if not delete:
             search_user(user)
-        # Other
-        self.max_page = 4
 
         get_connect = sqlite3.connect('translatebot.db')
         get_cursor = get_connect.cursor()
@@ -33,7 +31,7 @@ class Database:
         self.get_page = get_cursor.execute(f'SELECT page FROM tableone WHERE id = {self.user}').fetchone()[0]
         self.get_code = get_cursor.execute(f'SELECT code FROM tableone WHERE id = {self.user}').fetchone()[0]
         self.get_word = get_cursor.execute(f'SELECT word FROM tableone WHERE id = {self.user}').fetchone()[0]
-        self.state = get_cursor.execute(f'SELECT state FROM tableone WHERE id = {self.user}').fetchone()[0]
+        self.get_search = get_cursor.execute(f'SELECT search FROM tableone WHERE id = {self.user}').fetchone()[0]
 
     def get_delete_user(self) -> bool:
         delete_con = sqlite3.connect('translatebot.db')
@@ -58,8 +56,8 @@ def save_value(user, **kwargs):
         save_cursor.execute("UPDATE tableone SET code = ? WHERE id = ?", (kwargs['code'], user,))
     if 'word' in kwargs:
         save_cursor.execute("UPDATE tableone SET word = ? WHERE id = ?", (kwargs['word'], user,))
-    if 'state' in kwargs:
-        save_cursor.execute("UPDATE tableone SET state = ? WHERE id = ?", (kwargs['state'], user,))
+    if 'search' in kwargs:
+        save_cursor.execute("UPDATE tableone SET search = ? WHERE id = ?", (kwargs['search'], user,))
     save_connect.commit()
 
 
@@ -85,7 +83,7 @@ def search_table():
                               "page INT,"
                               "code STRING,"
                               "word BOOLEAN,"
-                              "state INT)")
+                              "search BOOLEAN)")
 
 
 def search_user(user):
@@ -94,7 +92,7 @@ def search_user(user):
 
     if search_cursor.execute("SELECT id FROM tableone WHERE id = ?", (user,)).fetchone() is None:
         search_cursor.execute("INSERT INTO tableone VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                              (user, "en", False, True, 1, generate_code(), False, 0))
+                              (user, "en", False, True, 1, generate_code(), False, False))
 
     search_connect.commit()
 

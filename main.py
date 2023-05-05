@@ -8,76 +8,30 @@ from telebot import types
 from config import token, owner_id
 from database import *
 from translator import Translate, language_text
+from language import inline_button, language_page, max_page
 from analysis import statistic
 from other_translate import document_translate, picture_translate
 from server import server_load
 
 print("Active")
-
-
 bot = telebot.TeleBot(token)
-max_page = 4
 
 
-def inline_button(page):
-    markup = types.InlineKeyboardMarkup()
-
-    # on every page
-    previous_page = types.InlineKeyboardButton("<", callback_data='back')
-    which_page = types.InlineKeyboardButton(f"{page}/{max_page}", callback_data='all')
-    next_page = types.InlineKeyboardButton(">", callback_data='next')
-
-    if page == 1:
-        # page 1
-        markup.add(types.InlineKeyboardButton("Русский", callback_data='ru'))
-        markup.add(types.InlineKeyboardButton("Английский", callback_data='en'))
-        markup.add(types.InlineKeyboardButton("Немецкий", callback_data='de'))
-        markup.add(previous_page, which_page, next_page)
-
-    if page == 2:
-        # page 2
-        markup.add(types.InlineKeyboardButton("Белорусский", callback_data='be'))
-        markup.add(types.InlineKeyboardButton("Украинский", callback_data='uk'))
-        markup.add(types.InlineKeyboardButton("Казахский", callback_data='kk'))
-        markup.add(previous_page, which_page, next_page)
-
-    if page == 3:
-        # page 3
-        markup.add(types.InlineKeyboardButton("Французский", callback_data='fr'))
-        markup.add(types.InlineKeyboardButton("Испанский", callback_data='es'))
-        markup.add(types.InlineKeyboardButton("Итальянский", callback_data='it'))
-        markup.add(previous_page, which_page, next_page)
-
-    if page == 4:
-        # page 4
-        markup.add(types.InlineKeyboardButton("Китайский", callback_data='zh-cn'))
-        markup.add(types.InlineKeyboardButton("Японский", callback_data='ja'))
-        markup.add(types.InlineKeyboardButton("Корейский", callback_data='ko'))
-        markup.add(previous_page, which_page, next_page)
-
-    return markup
-
-
-def edit_message(user, chat_id, last_message_id, event):
-
+def edit_message(chat_id, last_message_id, event):
+    state = 0
     for i in range(10000):
-        get_value = Database(user)
-
-        if get_value.state < 3:
-            get_value.state += 1
-            save_value(user, state=get_value.state)
+        if state < 3:
+            state += 1
         else:
-            get_value.state = 0
-            save_value(user, state=get_value.state)
+            state = 0
 
         if event.is_set():
-            save_value(user, state=0)
             break
 
-        text = f"⏳Подождите{'.' * get_value.state}" if get_value.state % 2 == 0 else f"⌛Подождите{'.' * get_value.state}"
+        text = f"⏳Подождите{'.' * state}" if state % 2 == 0 else f"⌛Подождите{'.' * state}"
 
         bot.edit_message_text(text, chat_id, last_message_id)
-        time.sleep(0.5)
+        time.sleep(0.75)
 
 
 # First launch and language change
@@ -89,8 +43,7 @@ def start(message):
         save_value(message.from_user.id, first_start=False)
     else:
         markup = types.InlineKeyboardMarkup()
-        change_language = types.InlineKeyboardButton("Сменить язык", callback_data='menu')
-        markup.add(change_language)
+        markup.add(types.InlineKeyboardButton("Сменить язык", callback_data='menu'))
         bot.send_message(message.chat.id, f"Вы переводите на {language_text(get_value.get_language)} язык", reply_markup=markup)
 
 
@@ -101,13 +54,11 @@ def delete_id(message):
 
     if get_value.get_delete_user:
         markup = types.InlineKeyboardMarkup()
-        reestablish = types.InlineKeyboardButton("Восстановить", callback_data='res')
-        markup.add(reestablish)
+        markup.add(types.InlineKeyboardButton("Восстановить", callback_data='res'))
         bot.send_message(message.from_user.id, "Восстановить ваши данные?", reply_markup=markup)
     else:
         markup = types.InlineKeyboardMarkup()
-        delete = types.InlineKeyboardButton("Удалить", callback_data='del')
-        markup.add(delete)
+        markup.add(types.InlineKeyboardButton("Удалить", callback_data='del'))
         bot.send_message(message.from_user.id, "Удалить ваши данные?", reply_markup=markup)
 
 
@@ -117,18 +68,27 @@ def switching_spelling(message):
     get_value = Database(message.from_user.id)
 
     markup = types.InlineKeyboardMarkup()
-    spelling_on = types.InlineKeyboardButton("Включить", callback_data='on')
-    spelling_of = types.InlineKeyboardButton("Выключить", callback_data='off')
 
     if get_value.get_spelling:
-        markup.add(spelling_of)
+        markup.add(types.InlineKeyboardButton("Выключить", callback_data='off'))
         bot.send_message(message.chat.id, 'Автоматическая проверка текста включена',
                          reply_markup=markup)
     else:
-        markup.add(spelling_on)
+        markup.add(types.InlineKeyboardButton("Включить", callback_data='on'))
         bot.send_message(message.chat.id, 'Автоматическая проверка текста выключена.\n\nОбратите внимание, '
                                           'при включение данной функции, ответ от бота возможно будет дольше',
                          reply_markup=markup)
+
+
+@bot.message_handler(commands=["search"])
+def search_language(message):
+    get_value = Database(message.from_user.id)
+    if not get_value.get_search:
+        save_value(message.from_user.id, search=True)
+        bot.send_message(message.chat.id, 'Поиск включен. Пожалуйста напишите язык который вы хотите найти')
+    else:
+        save_value(message.from_user.id, search=False)
+        bot.send_message(message.chat.id, 'Поиск выключен')
 
 
 # Database analysis
@@ -170,16 +130,14 @@ def callback_query(call):
     elif req[0] == 'res':
         # Get_Database automatically restores data
         markup = types.InlineKeyboardMarkup()
-        delete = types.InlineKeyboardButton("Удалить", callback_data='del')
-        markup.add(delete)
+        markup.add(types.InlineKeyboardButton("Удалить", callback_data='del'))
         bot.edit_message_text('Данные восстановлены. Удалить ваши данные?',
                               reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
     # Delete
     elif req[0] == 'del':
         delete_data(call.from_user.id)
         markup = types.InlineKeyboardMarkup()
-        reestablish = types.InlineKeyboardButton("Восстановить", callback_data='res')
-        markup.add(reestablish)
+        markup.add(types.InlineKeyboardButton("Восстановить", callback_data='res'))
         bot.edit_message_text('Данные удалены. Восстановить ваши данные?',
                               reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
 
@@ -187,16 +145,14 @@ def callback_query(call):
     elif req[0] == 'on':
         save_value(call.from_user.id, spelling=True)
         markup = types.InlineKeyboardMarkup()
-        spelling_on = types.InlineKeyboardButton("Выключить", callback_data='off')
-        markup.add(spelling_on)
+        markup.add(types.InlineKeyboardButton("Выключить", callback_data='off'))
         bot.edit_message_text('Автоматическая проверка текста включена',
                               reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
     # spelling off
     elif req[0] == 'off':
         save_value(call.from_user.id, spelling=False)
         markup = types.InlineKeyboardMarkup()
-        spelling_of = types.InlineKeyboardButton("Включить", callback_data='on')
-        markup.add(spelling_of)
+        markup.add(types.InlineKeyboardButton("Включить", callback_data='on'))
         bot.edit_message_text('Автоматическая проверка текста выключена\n\nОбратите внимание, '
                               'при включение данной функции, ответ от бота возможно будет дольше',
                               reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
@@ -218,7 +174,7 @@ def handle_document(message):
         bot.send_message(message.chat.id, '⏳Подождите')
 
         event = Event()
-        th = Thread(target=edit_message, args=(message.from_user.id, message.chat.id, message.id + 1, event))
+        th = Thread(target=edit_message, args=(message.chat.id, message.id + 1, event))
         th.start()
 
         # Download file
@@ -249,7 +205,7 @@ def handle_photo(message):
     # Create an additional thread to change the message
     bot.send_message(message.chat.id, "⏳Подождите")
     event = Event()
-    th = Thread(target=edit_message, args=(message.from_user.id, message.chat.id, message.id + 1, event))
+    th = Thread(target=edit_message, args=(message.chat.id, message.id + 1, event))
     th.start()
 
     server = server_load()
@@ -278,18 +234,25 @@ def handle_photo(message):
 # Message from user for translation
 @bot.message_handler(content_types=["text"])
 def handle_text(message):
-    bot.send_message(message.chat.id, 'Подождите...')
     get_value = Database(message.from_user.id)
-    translate = Translate()
-    # translation with spell check
-    if get_value.get_spelling:
-        message_translation = translate.auto_spelling(message.text.strip(), get_value.get_language)
-        if message_translation.errors_found:
-            bot.edit_message_text(message_translation.spelling_text, message.chat.id, message.id + 1, parse_mode="Markdown")
-            bot.send_message(message.chat.id, message_translation.result)
-        else:
-            bot.edit_message_text(message_translation.result, message.chat.id, message.id + 1)
+    if get_value.get_search:
+        try:
+            bot.send_message(message.chat.id, 'Язык найден:', reply_markup=inline_button(language_page(message.text)))
+            save_value(message.from_user.id, search=False)
+        except KeyError:
+            bot.send_message(message.chat.id, 'Ошибка в написании языка. Пожалуйста попробуйте снова или напишите /search чтобы выключить поиск.')
     else:
-        bot.edit_message_text(translate.translate(message.text.strip(), get_value.get_language), message.chat.id, message.id + 1)
+        bot.send_message(message.chat.id, 'Подождите...')
+        translate = Translate()
+        # translation with spell check
+        if get_value.get_spelling:
+            message_translation = translate.auto_spelling(message.text.strip(), get_value.get_language)
+            if message_translation.errors_found:
+                bot.edit_message_text(message_translation.spelling_text, message.chat.id, message.id + 1, parse_mode="Markdown")
+                bot.send_message(message.chat.id, message_translation.result)
+            else:
+                bot.edit_message_text(message_translation.result, message.chat.id, message.id + 1)
+        else:
+            bot.edit_message_text(translate.translate(message.text.strip(), get_value.get_language), message.chat.id, message.id + 1)
 
 bot.polling(none_stop=True, interval=0, timeout=25)
