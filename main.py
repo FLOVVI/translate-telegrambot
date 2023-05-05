@@ -77,7 +77,7 @@ def edit_message(user, chat_id, last_message_id, event):
         text = f"⏳Подождите{'.' * get_value.state}" if get_value.state % 2 == 0 else f"⌛Подождите{'.' * get_value.state}"
 
         bot.edit_message_text(text, chat_id, last_message_id)
-        time.sleep(1)
+        time.sleep(0.5)
 
 
 # First launch and language change
@@ -254,7 +254,7 @@ def handle_photo(message):
 
     server = server_load()
 
-    if int(server.usage_percentage) < 150:
+    if int(server.usage_percentage) < 50:
         try:
             # Download file
             file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
