@@ -74,7 +74,9 @@ def edit_message(user, chat_id, last_message_id, event):
             save_value(user, state=0)
             break
 
-        bot.edit_message_text(f"Подождите{'.' * get_value.state}", chat_id, last_message_id)
+        text = f"⏳Подождите{'.' * get_value.state}" if get_value.state % 2 == 0 else f"⌛Подождите{'.' * get_value.state}"
+
+        bot.edit_message_text(text, chat_id, last_message_id)
         time.sleep(1)
 
 
@@ -213,7 +215,7 @@ def callback_query(call):
 @bot.message_handler(content_types=['document'])
 def handle_document(message):
     try:
-        bot.send_message(message.chat.id, 'Подождите')
+        bot.send_message(message.chat.id, '⏳Подождите')
 
         event = Event()
         th = Thread(target=edit_message, args=(message.from_user.id, message.chat.id, message.id + 1, event))
@@ -244,14 +246,15 @@ def handle_document(message):
 @bot.message_handler(content_types=['photo'])
 def handle_photo(message):
 
-    bot.send_message(message.chat.id, "Подождите")
+    # Create an additional thread to change the message
+    bot.send_message(message.chat.id, "⏳Подождите")
     event = Event()
     th = Thread(target=edit_message, args=(message.from_user.id, message.chat.id, message.id + 1, event))
     th.start()
 
     server = server_load()
 
-    if int(server.usage_percentage) < 50:
+    if int(server.usage_percentage) < 150:
         try:
             # Download file
             file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
@@ -265,11 +268,11 @@ def handle_photo(message):
             except FileNotFoundError:
                 pass
         except:
-            bot.edit_message_text("Произошла неизвестная ошибка. Повторите попытку", message.chat.id, message.id + 1)
             event.set()
+            bot.edit_message_text("Произошла неизвестная ошибка. Повторите попытку", message.chat.id, message.id + 1)
     else:
-        bot.send_message(message.chat.id, f"Сервер перегружен. Пожалуйста повторите попытку через {Translate().translate(server.resets_text,'ru')[5:]}")
         event.set()
+        bot.edit_message_text(f"Сервер перегружен. Пожалуйста повторите попытку через {Translate().translate(server.resets_text,'ru')[5:]}", message.chat.id, message.id + 1)
 
 
 # Message from user for translation
