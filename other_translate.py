@@ -31,7 +31,7 @@ def picture_translate(user, downloaded_file):
         file.write(downloaded_file)
 
     reader = easyocr.Reader(["ru", "en", "uk"], gpu=False)
-    result_reader = reader.readtext('translate.jpg', detail=0, paragraph=True)
+    result_reader = reader.readtext('translate.jpg', detail=0, paragraph=True, blocklist=["1234567890:"])
     text = " ".join(result_reader)
     if get_value.get_spelling:
         result = translate.auto_spelling(text, get_value.get_language, sorting=False).result

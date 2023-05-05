@@ -13,6 +13,13 @@ headers = {
     "Referer": "https://www.pythonanywhere.com/login/"
 }
 
+data = {
+    "csrfmiddlewaretoken": '',
+    "auth-username": request_login,
+    "auth-password": request_password,
+    "login_view-current_step": "auth"
+}
+
 
 def get_token():
     response_get = session.get(URL, headers=headers)
@@ -21,18 +28,9 @@ def get_token():
     return token
 
 
-data = {
-    "csrfmiddlewaretoken": get_token(),
-    "auth-username": request_login,
-    "auth-password": request_password,
-    "login_view-current_step": "auth"
-}
-
-
 def server_load():
     # Get a token
     data['csrfmiddlewaretoken'] = get_token()
-    print(data)
     # We receive data after registration
     response = session.post(URL, data=data, headers=headers)
     soup = bs(response.text, "lxml")
@@ -50,4 +48,4 @@ class ServerLoad:
         self.usage_second = usage_second
         self.usage_max_second = usage_max_second
         self.resets_text = resets_text
-        self.statistics_text = f"CPU использовано: {self.usage_percentage}% - {self.usage_second}/{self.usage_max_second} секунд. Сброс через {Translator().translate(self.resets_text, dest='ru').text}"
+        self.statistics_text = f"CPU использовано: {self.usage_percentage}% - {self.usage_second}/{self.usage_max_second} секунд. Сброс через {self.resets_text}"

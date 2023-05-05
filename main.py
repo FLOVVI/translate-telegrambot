@@ -243,14 +243,16 @@ def handle_document(message):
 # Picture translate
 @bot.message_handler(content_types=['photo'])
 def handle_photo(message):
-    if server_load().usage_percentage < 80:
-        event = Event()
+
+    bot.send_message(message.chat.id, "Подождите")
+    event = Event()
+    th = Thread(target=edit_message, args=(message.from_user.id, message.chat.id, message.id + 1, event))
+    th.start()
+
+    server = server_load()
+
+    if int(server.usage_percentage) < 50:
         try:
-            bot.send_message(message.chat.id, "Подождите")
-
-            th = Thread(target=edit_message, args=(message.from_user.id, message.chat.id, message.id + 1, event))
-            th.start()
-
             # Download file
             file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
             downloaded_file = bot.download_file(file_info.file_path)
@@ -266,7 +268,8 @@ def handle_photo(message):
             bot.edit_message_text("Произошла неизвестная ошибка. Повторите попытку", message.chat.id, message.id + 1)
             event.set()
     else:
-        bot.send_message(message.chat.id, 'Сервер перегружен. Пожалуйста повторите попытку позже')
+        bot.send_message(message.chat.id, f"Сервер перегружен. Пожалуйста повторите попытку через {Translate().translate(server.resets_text,'ru')[5:]}")
+        event.set()
 
 
 # Message from user for translation
