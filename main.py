@@ -108,8 +108,12 @@ def callback_query(call):
     req = call.data.split('_')
     get_value = Database(call.from_user.id)
 
-    if req[0] in ['next', 'back', 'menu', 'all']:
+    if req[0] in ['next', 'back', 'verynext', 'veryback', 'menu', 'all']:
         page = get_value.get_page
+
+        page = 1 if req[0] == 'veryback' else page
+        page = max_page if req[0] == 'verynext' else page
+
         if req[0] == 'next':
             if page < max_page:
                 page += 1
@@ -240,7 +244,7 @@ def handle_text(message):
             bot.send_message(message.chat.id, 'Язык найден:', reply_markup=inline_button(language_page(message.text)))
             save_value(message.from_user.id, search=False)
         except KeyError:
-            bot.send_message(message.chat.id, 'Ошибка в написании языка. Пожалуйста попробуйте снова или напишите /search чтобы выключить поиск.')
+            bot.send_message(message.chat.id, 'Данного языка еще нету в боте. Пожалуйста попробуйте снова или напишите /search чтобы выключить поиск.')
     else:
         bot.send_message(message.chat.id, 'Подождите...')
         translate = Translate()
