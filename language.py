@@ -7,11 +7,11 @@ def inline_button(page):
     markup = types.InlineKeyboardMarkup(row_width=5)
 
     # on every page
-    very_previous_page = types.InlineKeyboardButton("<<", callback_data='veryback')
+    first_page = types.InlineKeyboardButton("<<", callback_data='first')
     previous_page = types.InlineKeyboardButton("<", callback_data='back')
     which_page = types.InlineKeyboardButton(f"{page}/{max_page}", callback_data='all')
     next_page = types.InlineKeyboardButton(">", callback_data='next')
-    very_next_page = types.InlineKeyboardButton(">>", callback_data='verynext')
+    last_page = types.InlineKeyboardButton(">>", callback_data='last')
 
     if page == 1:
         # page 1
@@ -49,7 +49,7 @@ def inline_button(page):
         markup.add(types.InlineKeyboardButton("Каталанский", callback_data='ca'))
         markup.add(types.InlineKeyboardButton("Голландский", callback_data='nl'))
 
-    markup.add(very_previous_page, previous_page, which_page, next_page, very_next_page)
+    markup.add(first_page, previous_page, which_page, next_page, last_page)
 
     return markup
 

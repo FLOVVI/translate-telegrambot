@@ -108,27 +108,27 @@ def callback_query(call):
     req = call.data.split('_')
     get_value = Database(call.from_user.id)
 
-    if req[0] in ['next', 'back', 'verynext', 'veryback', 'menu', 'all']:
+    if req[0] in ['next', 'back', 'last', 'first', 'menu', 'all']:
         page = get_value.get_page
 
-        page = 1 if req[0] == 'veryback' else page
-        page = max_page if req[0] == 'verynext' else page
+        page = 1 if req[0] == 'first' else page
+        page = max_page if req[0] == 'last' else page
 
         if req[0] == 'next':
             if page < max_page:
                 page += 1
             else:
                 page = 1
-            save_value(call.from_user.id, page=page)
 
         if req[0] == 'back':
             if page > 1:
                 page -= 1
             else:
                 page = max_page
-            save_value(call.from_user.id, page=page)
 
         bot.edit_message_reply_markup(call.from_user.id, call.message.message_id, reply_markup=inline_button(page))
+
+        save_value(call.from_user.id, page=page)
 
     # Reestablish
     elif req[0] == 'res':
