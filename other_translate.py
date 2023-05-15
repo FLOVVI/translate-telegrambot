@@ -1,4 +1,6 @@
+import os
 import easyocr
+from gtts import gTTS
 
 from translator import Translate
 from database import Database
@@ -45,3 +47,13 @@ class PictureTranslate:
     def __init__(self, text_recognition, result):
         self.text_recognition = text_recognition
         self.result = result
+
+
+def message_voice(user, text):
+    get_value = Database(user)
+    lang = Translate().translator.translate(text).src
+
+    tts = gTTS(text=text, lang=lang)
+    tts.save(f'{get_value.get_code}.ogg')
+
+    return f'{get_value.get_code}.ogg'

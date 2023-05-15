@@ -1,4 +1,5 @@
 from telebot import types
+from database import save_value
 
 max_page = 6
 
@@ -54,7 +55,7 @@ def inline_button(page):
     return markup
 
 
-def language_page(language):
+def language_page(user, language):
     language_page_dict = {
         "Русский": 1,
         "Английски": 1,
@@ -76,4 +77,5 @@ def language_page(language):
         "Голландский": 6,
     }
 
+    save_value(user, page=language_page_dict[language])
     return language_page_dict[language]

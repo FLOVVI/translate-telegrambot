@@ -10,7 +10,7 @@ from database import *
 from translator import Translate, language_text
 from language import inline_button, language_page, max_page
 from analysis import statistic
-from other_translate import document_translate, picture_translate
+from other_translate import document_translate, picture_translate, message_voice
 from server import server_load
 
 print("Active")
@@ -130,6 +130,18 @@ def callback_query(call):
 
         save_value(call.from_user.id, page=page)
 
+    # message voice
+    elif req[0] == 'voice':
+        text = call.message.text.split()
+        text.remove(text[0])
+        voice = message_voice(call.from_user.id, " ".join(text))
+
+        audio = open(voice, 'rb')
+        bot.send_voice(call.message.chat.id, audio)
+        audio.close()
+
+        os.remove(voice)
+
     # Reestablish
     elif req[0] == 'res':
         # Get_Database automatically restores data
@@ -173,7 +185,7 @@ def callback_query(call):
 
 # Document Translate
 @bot.message_handler(content_types=['document'])
-def handle_document(message):
+def handler_document(message):
     try:
         bot.send_message(message.chat.id, '⏳Подождите')
 
@@ -204,7 +216,7 @@ def handle_document(message):
 
 # Picture translate
 @bot.message_handler(content_types=['photo'])
-def handle_photo(message):
+def handler_photo(message):
 
     # Create an additional thread to change the message
     bot.send_message(message.chat.id, "⏳Подождите")
@@ -237,26 +249,28 @@ def handle_photo(message):
 
 # Message from user for translation
 @bot.message_handler(content_types=["text"])
-def handle_text(message):
+def handler_text(message):
     get_value = Database(message.from_user.id)
     if get_value.get_search:
         try:
-            bot.send_message(message.chat.id, 'Язык найден:', reply_markup=inline_button(language_page(message.text)))
+            bot.send_message(message.chat.id, 'Язык найден:', reply_markup=inline_button(language_page(message.from_user.id, message.text.title())))
             save_value(message.from_user.id, search=False)
         except KeyError:
             bot.send_message(message.chat.id, 'Данного языка еще нету в боте. Пожалуйста попробуйте снова или напишите /search чтобы выключить поиск.')
     else:
         bot.send_message(message.chat.id, 'Подождите...')
         translate = Translate()
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
         # translation with spell check
         if get_value.get_spelling:
             message_translation = translate.auto_spelling(message.text.strip(), get_value.get_language)
             if message_translation.errors_found:
                 bot.edit_message_text(message_translation.spelling_text, message.chat.id, message.id + 1, parse_mode="Markdown")
-                bot.send_message(message.chat.id, message_translation.result)
+                bot.send_message(message.chat.id, message_translation.result, reply_markup=markup)
             else:
-                bot.edit_message_text(message_translation.result, message.chat.id, message.id + 1)
+                bot.edit_message_text(message_translation.result, message.chat.id, message.id + 1, reply_markup=markup)
         else:
-            bot.edit_message_text(translate.translate(message.text.strip(), get_value.get_language), message.chat.id, message.id + 1)
+            bot.edit_message_text(translate.translate(message.text.strip(), get_value.get_language), message.chat.id, message.id + 1, reply_markup=markup)
 
 bot.polling(none_stop=True, interval=0, timeout=25)
