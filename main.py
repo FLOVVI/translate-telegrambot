@@ -241,7 +241,7 @@ def handle_text(message):
     get_value = Database(message.from_user.id)
     if get_value.get_search:
         try:
-            bot.send_message(message.chat.id, 'Язык найден:', reply_markup=inline_button(language_page(message.text)))
+            bot.send_message(message.chat.id, 'Язык найден:', reply_markup=inline_button(language_page(message.text.title())))
             save_value(message.from_user.id, search=False)
         except KeyError:
             bot.send_message(message.chat.id, 'Данного языка еще нету в боте. Пожалуйста попробуйте снова или напишите /search чтобы выключить поиск.')
