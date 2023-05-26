@@ -5,9 +5,10 @@ from pyaspeller import YandexSpeller
 class Translate:
 
     def __init__(self):
-        self.translator = Translator()
+        self.google_translator = Translator()
         self.LANGUAGES = LANGUAGES
         self.spelling = YandexSpeller()
+        self.detect = Translator().detect
 
     def translate(self, text, language) -> str:
         """
@@ -25,19 +26,19 @@ class Translate:
 
         text = "No Text" if text == '' else text
 
-        result = self.translator.translate(text, dest=language)
+        detect = self.detect(text)
 
         # Smart translation from Belarusian and Ukrainian is incorrect
         if language not in ['be', 'uk']:
-            if result.src == language:
+            if detect.lang == language:
                 if language == "ru":
-                    return f'[en] {self.translator.translate(text, dest="en").text}'
+                    return f'[en] {self.google_translator.translate(text, dest="en").text}'
                 else:
-                    return f'[ru] {self.translator.translate(text, dest="ru").text}'
+                    return f'[ru] {self.google_translator.translate(text, dest="ru").text}'
             else:
-                return f'[{language}] {result.text}'
+                return f'[{language}] {self.google_translator.translate(text, dest=language).text}'
         else:
-            return f'[{language}] {result.text}'
+            return f'[{language}] {self.google_translator.translate(text, dest=language).text}'
 
     def auto_spelling(self, text, language, sorting=True):
         """

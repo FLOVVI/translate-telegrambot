@@ -1,5 +1,7 @@
 import os
 import easyocr
+import soundfile
+import speech_recognition
 from gtts import gTTS
 
 from translator import Translate
@@ -51,9 +53,41 @@ class PictureTranslate:
 
 def message_voice(user, text):
     get_value = Database(user)
-    lang = Translate().translator.translate(text).src
+    lang = Translate().detect(text).lang
 
     tts = gTTS(text=text, lang=lang)
     tts.save(f'{get_value.get_code}.ogg')
 
     return f'{get_value.get_code}.ogg'
+
+
+def audio_translate(user, audio_id):
+    translate = Translate()
+    get_value = Database(user)
+
+    language = 'ru-RU' if get_value.get_language == 'en' else 'en-US'
+
+    # Convert
+    data, samplerate = soundfile.read(f'{audio_id}.ogg')
+    soundfile.write(f'{audio_id}.wav', data, samplerate)
+    os.remove(f'{audio_id}.ogg')
+
+    # Recognition
+    recognizer = speech_recognition.Recognizer()
+    sample = speech_recognition.WavFile(os.path.abspath(f"{audio_id}.wav"))
+    with sample as audio:
+        recognizer.adjust_for_ambient_noise(audio)
+        content = recognizer.record(audio)
+
+        try:
+            text_recognition = recognizer.recognize_google(content, language=language)
+            result = translate.translate(text_recognition, get_value.get_language)
+            return AudioTranslate(text_recognition, result)
+        except speech_recognition.UnknownValueError:
+            return AudioTranslate('Не удалось распознать текст.')
+
+
+class AudioTranslate:
+    def __init__(self, text_recognition, result=''):
+        self.text_recognition = text_recognition
+        self.result = result
