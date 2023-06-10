@@ -35,7 +35,6 @@ class Database:
             self.get_search = get_cursor.execute(f'SELECT search FROM tableone WHERE id = {self.user}').fetchone()[0]
 
 
-
 def save_value(user, **kwargs):
     save_connect = sqlite3.connect('translatebot.db')
     save_cursor = save_connect.cursor()

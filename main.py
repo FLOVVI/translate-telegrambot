@@ -53,7 +53,6 @@ def start(message):
 @bot.message_handler(commands=["delete"])
 def delete_id(message):
     get_value = Database(message.from_user.id, delete=True)
-    print(get_value.get_delete_user)
     if get_value.get_delete_user:
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Восстановить", callback_data='res'))
@@ -214,7 +213,6 @@ def handler_audio(message):
     get_value = Database(message.from_user.id)
 
     file_info = bot.get_file(message.voice.file_id)
-    print(file_info)
     file_download = requests.get(f'https://api.telegram.org/file/bot{token}/{file_info.file_path}')
 
     with open(f'{get_value.get_code}.ogg', 'wb') as file:
