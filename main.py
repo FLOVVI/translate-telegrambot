@@ -33,7 +33,6 @@ def edit_message(chat_id, last_message_id, event):
 
         bot.edit_message_text(text, chat_id, last_message_id)
         time.sleep(0.75)
-    bot.edit_message_text('Запрос не удалось выполнить', chat_id, last_message_id)
 
 
 # First launch and language change
