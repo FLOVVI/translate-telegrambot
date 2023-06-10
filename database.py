@@ -24,21 +24,16 @@ class Database:
 
         get_connect = sqlite3.connect('translatebot.db')
         get_cursor = get_connect.cursor()
+        self.get_delete_user = True if get_cursor.execute("SELECT id FROM tableone WHERE id = ?", (self.user,)).fetchone() is None else False
+        if not self.get_delete_user:
+            self.get_language = get_cursor.execute(f'SELECT language FROM tableone WHERE id = {self.user}').fetchone()[0]
+            self.get_spelling = get_cursor.execute(f'SELECT spelling FROM tableone WHERE id = {self.user}').fetchone()[0]
+            self.get_first_start = get_cursor.execute(f'SELECT first_start FROM tableone WHERE id = {self.user}').fetchone()[0]
+            self.get_page = get_cursor.execute(f'SELECT page FROM tableone WHERE id = {self.user}').fetchone()[0]
+            self.get_code = get_cursor.execute(f'SELECT code FROM tableone WHERE id = {self.user}').fetchone()[0]
+            self.get_word = get_cursor.execute(f'SELECT word FROM tableone WHERE id = {self.user}').fetchone()[0]
+            self.get_search = get_cursor.execute(f'SELECT search FROM tableone WHERE id = {self.user}').fetchone()[0]
 
-        self.get_language = get_cursor.execute(f'SELECT language FROM tableone WHERE id = {self.user}').fetchone()[0]
-        self.get_spelling = get_cursor.execute(f'SELECT spelling FROM tableone WHERE id = {self.user}').fetchone()[0]
-        self.get_first_start = get_cursor.execute(f'SELECT first_start FROM tableone WHERE id = {self.user}').fetchone()[0]
-        self.get_page = get_cursor.execute(f'SELECT page FROM tableone WHERE id = {self.user}').fetchone()[0]
-        self.get_code = get_cursor.execute(f'SELECT code FROM tableone WHERE id = {self.user}').fetchone()[0]
-        self.get_word = get_cursor.execute(f'SELECT word FROM tableone WHERE id = {self.user}').fetchone()[0]
-        self.get_search = get_cursor.execute(f'SELECT search FROM tableone WHERE id = {self.user}').fetchone()[0]
-
-    def get_delete_user(self) -> bool:
-        delete_con = sqlite3.connect('translatebot.db')
-        delete_cursor = delete_con.cursor()
-        user_check = delete_cursor.execute("SELECT id FROM tableone WHERE id = ?", (self.user,)).fetchone()
-        # Check if user profile is deleted
-        return True if user_check is None else False
 
 
 def save_value(user, **kwargs):

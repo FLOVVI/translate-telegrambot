@@ -20,7 +20,7 @@ bot = telebot.TeleBot(token)
 
 def edit_message(chat_id, last_message_id, event):
     state = 0
-    for i in range(10000):
+    for i in range(150):
         if state < 3:
             state += 1
         else:
@@ -33,6 +33,7 @@ def edit_message(chat_id, last_message_id, event):
 
         bot.edit_message_text(text, chat_id, last_message_id)
         time.sleep(0.75)
+    bot.edit_message_text('Запрос не удалось выполнить', chat_id, last_message_id)
 
 
 # First launch and language change
@@ -52,7 +53,7 @@ def start(message):
 @bot.message_handler(commands=["delete"])
 def delete_id(message):
     get_value = Database(message.from_user.id, delete=True)
-
+    print(get_value.get_delete_user)
     if get_value.get_delete_user:
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Восстановить", callback_data='res'))
@@ -142,17 +143,23 @@ def callback_query(call):
         # Get rid of [lang]
         text = call.message.text.split()
         text.remove(text[0])
+        try:
+            voice = message_voice(call.from_user.id, " ".join(text))
 
-        voice = message_voice(call.from_user.id, " ".join(text))
+            # End of query execution
+            event.set()
+            bot.delete_message(call.message.chat.id, call.message.id + 1)
 
-        # End of query execution
-        event.set()
-        bot.delete_message(call.message.chat.id, call.message.id + 1)
+            with open(voice, 'rb') as audio:
+                bot.send_voice(call.message.chat.id, audio)
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
 
-        with open(voice, 'rb') as audio:
-            bot.send_voice(call.message.chat.id, audio)
-
-        os.remove(voice)
+            os.remove(voice)
+        except ValueError:
+            event.set()
+            bot.delete_message(call.message.chat.id, call.message.id + 1)
+            bot.send_message(call.message.chat.id, 'Не удалось распознать текст на данном языке')
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
 
     # Reestablish
     elif req[0] == 'res':
@@ -332,5 +339,6 @@ def handler_text(message):
                 bot.edit_message_text(message_translation.result, message.chat.id, message.id + 1, reply_markup=markup)
         else:
             bot.edit_message_text(translate.translate(message.text.strip(), get_value.get_language), message.chat.id, message.id + 1, reply_markup=markup)
+
 
 bot.polling(none_stop=True, interval=0, timeout=25)
