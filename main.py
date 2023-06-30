@@ -29,7 +29,7 @@ def edit_message(chat_id, last_message_id, event):
         if event.is_set():
             break
 
-        text = f"⏳Подождите{'.' * state}" if state % 2 == 0 else f"⌛Подождите{'.' * state}"
+        text = f"{'⏳' if state % 2 == 0 else '⌛'}Подождите{'.' * state}"
 
         bot.edit_message_text(text, chat_id, last_message_id)
         time.sleep(0.75)
@@ -150,6 +150,7 @@ def callback_query(call):
 
             with open(voice, 'rb') as audio:
                 bot.send_voice(call.message.chat.id, audio)
+                print('sfadf')
             bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
 
             os.remove(voice)
@@ -328,14 +329,16 @@ def handler_text(message):
         markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
         # translation with spell check
         if get_value.get_spelling:
-            message_translation = translate.auto_spelling(message.text.strip(), get_value.get_language)
+            # checking for errors in the text
+            message_translation = translate.auto_spelling(message.text.strip().replace('_', ' '), get_value.get_language)
             if message_translation.errors_found:
+                # if errors are found
                 bot.edit_message_text(message_translation.spelling_text, message.chat.id, message.id + 1, parse_mode="Markdown")
                 bot.send_message(message.chat.id, message_translation.result, reply_markup=markup)
             else:
                 bot.edit_message_text(message_translation.result, message.chat.id, message.id + 1, reply_markup=markup)
         else:
-            bot.edit_message_text(translate.translate(message.text.strip(), get_value.get_language), message.chat.id, message.id + 1, reply_markup=markup)
+            bot.edit_message_text(translate.translate(message.text.strip().replace('_', ' '), get_value.get_language), message.chat.id, message.id + 1, reply_markup=markup)
 
 
 bot.polling(none_stop=True, interval=0, timeout=25)
