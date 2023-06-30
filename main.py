@@ -326,7 +326,7 @@ def handler_text(message):
         bot.send_message(message.chat.id, 'Подождите...')
         translate = Translate()
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
+        # markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
         # translation with spell check
         if get_value.get_spelling:
             # checking for errors in the text
