@@ -111,16 +111,22 @@ def callback_query(call):
     if req[0] in ['next', 'back', 'last', 'first', 'menu', 'all']:
         page = get_value.get_page
 
-        page = 1 if req[0] == 'first' else page
-        page = max_page if req[0] == 'last' else page
+        if req[0] == 'first':
+            bot.answer_callback_query(call.id, 'Первая страница')
+            page = 1
+        if req[0] == 'last':
+            bot.answer_callback_query(call.id, 'Последняя страница')
+            page = max_page
 
         if req[0] == 'next':
+            bot.answer_callback_query(call.id, 'Следующая страница')
             if page < max_page:
                 page += 1
             else:
                 page = 1
 
         if req[0] == 'back':
+            bot.answer_callback_query(call.id, 'Предыдущая страница')
             if page > 1:
                 page -= 1
             else:
@@ -132,6 +138,9 @@ def callback_query(call):
 
     # Message voice
     elif req[0] == 'voice':
+        # Pop-up notification
+        bot.answer_callback_query(call.id, 'Озвучка сообщения')
+
         # Waiting for query execution
         bot.send_message(call.message.chat.id, '⏳Подождите')
         event = Event()
@@ -150,7 +159,6 @@ def callback_query(call):
 
             with open(voice, 'rb') as audio:
                 bot.send_voice(call.message.chat.id, audio)
-                print('sfadf')
             bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
 
             os.remove(voice)
@@ -162,6 +170,8 @@ def callback_query(call):
 
     # Reestablish
     elif req[0] == 'res':
+        bot.answer_callback_query(call.id, 'Данные восстановлены')
+
         # Get_Database automatically restores data
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Удалить", callback_data='del'))
@@ -169,6 +179,8 @@ def callback_query(call):
                               reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
     # Delete
     elif req[0] == 'del':
+        bot.answer_callback_query(call.id, 'Данные удалены')
+
         delete_data(call.from_user.id)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Восстановить", callback_data='res'))
@@ -177,6 +189,8 @@ def callback_query(call):
 
     # spelling on
     elif req[0] == 'on':
+        bot.answer_callback_query(call.id, 'Включено')
+
         save_value(call.from_user.id, spelling=True)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Выключить", callback_data='off'))
@@ -184,6 +198,8 @@ def callback_query(call):
                               reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
     # spelling off
     elif req[0] == 'off':
+        bot.answer_callback_query(call.id, 'Выключено')
+
         save_value(call.from_user.id, spelling=False)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Включить", callback_data='on'))
@@ -192,6 +208,8 @@ def callback_query(call):
                               reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
     # Choice language
     else:
+        bot.answer_callback_query(call.id, f'Перевод на {language_text(req[0])}')
+
         save_value(call.from_user.id, language=req[0])
         markup = types.InlineKeyboardMarkup()
         change_language = types.InlineKeyboardButton("Сменить язык", callback_data='menu')
@@ -326,7 +344,7 @@ def handler_text(message):
         bot.send_message(message.chat.id, 'Подождите...')
         translate = Translate()
         markup = types.InlineKeyboardMarkup()
-        # markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
+        markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
         # translation with spell check
         if get_value.get_spelling:
             # checking for errors in the text
