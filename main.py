@@ -52,12 +52,11 @@ def start(message):
 @bot.message_handler(commands=["delete"])
 def delete_id(message):
     get_value = Database(message.from_user.id, delete=True)
+    markup = types.InlineKeyboardMarkup()
     if get_value.get_delete_user:
-        markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Восстановить", callback_data='res'))
         bot.send_message(message.from_user.id, "Восстановить ваши данные?", reply_markup=markup)
     else:
-        markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Удалить", callback_data='del'))
         bot.send_message(message.from_user.id, "Удалить ваши данные?", reply_markup=markup)
 
@@ -66,7 +65,6 @@ def delete_id(message):
 @bot.message_handler(commands=["spelling"])
 def switching_spelling(message):
     get_value = Database(message.from_user.id)
-
     markup = types.InlineKeyboardMarkup()
 
     if get_value.get_spelling:

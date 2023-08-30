@@ -36,23 +36,11 @@ class Database:
 
 
 def save_value(user, **kwargs):
-    save_connect = sqlite3.connect('translatebot.db')
-    save_cursor = save_connect.cursor()
-    if 'language' in kwargs:
-        save_cursor.execute("UPDATE tableone SET language = ? WHERE id = ?", (kwargs['language'], user,))
-    if 'spelling' in kwargs:
-        save_cursor.execute("UPDATE tableone SET spelling = ? WHERE id = ?", (kwargs['spelling'], user,))
-    if 'first_start' in kwargs:
-        save_cursor.execute("UPDATE tableone SET first_start = ? WHERE id = ?", (kwargs['first_start'], user,))
-    if 'page' in kwargs:
-        save_cursor.execute("UPDATE tableone SET page = ? WHERE id = ?", (kwargs['page'], user,))
-    if 'code' in kwargs:
-        save_cursor.execute("UPDATE tableone SET code = ? WHERE id = ?", (kwargs['code'], user,))
-    if 'word' in kwargs:
-        save_cursor.execute("UPDATE tableone SET word = ? WHERE id = ?", (kwargs['word'], user,))
-    if 'search' in kwargs:
-        save_cursor.execute("UPDATE tableone SET search = ? WHERE id = ?", (kwargs['search'], user,))
-    save_connect.commit()
+    connect = sqlite3.connect('translatebot.db')
+    cursor = connect.cursor()
+    for key, value in kwargs.items():
+        cursor.execute(f"UPDATE tableone SET {key} = ? WHERE id = ?", (value, user))
+    connect.commit()
 
 
 def delete_data(user):
