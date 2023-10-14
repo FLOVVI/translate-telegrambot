@@ -1,5 +1,6 @@
 from googletrans import Translator, LANGUAGES
 from pyaspeller import YandexSpeller
+from language import LANGUAGES_RU
 
 
 class Translate:
@@ -85,12 +86,5 @@ class AutoSpelling:
 
 
 def language_text(language) -> str:
-    if language == 'zh-cn':
-        return "Китайский"
-    elif language == 'uk':
-        return 'Украинский'
-    elif language == 'be':
-        return 'Белорусский'
-    else:
-        # .split()[0] for two-word languages (Японский язык)
-        return Translator().translate(LANGUAGES.get(language), dest="ru").text.split()[0].title()
+    # .split()[0] for two-word languages (Японский язык)
+    return LANGUAGES_RU.get(language).split()[0].title()

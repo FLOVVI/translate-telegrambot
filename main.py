@@ -40,7 +40,7 @@ def edit_message(chat_id, last_message_id, event):
 def start(message):
     get_value = Database(message.from_user.id)
     if get_value.get_first_start:
-        bot.send_message(message.chat.id, 'Выберите на какой язык переводить:', reply_markup=inline_button(get_value.get_page))
+        bot.send_message(message.chat.id, 'Выберите на какой язык переводить:\n\nДля поиска нужного языка используйте /search', reply_markup=inline_button(get_value.get_page))
         save_value(message.from_user.id, first_start=False)
     else:
         markup = types.InlineKeyboardMarkup()
@@ -109,26 +109,23 @@ def callback_query(call):
     if req[0] in ['next', 'back', 'last', 'first', 'menu', 'all']:
         page = get_value.get_page
 
-        if req[0] == 'first':
-            bot.answer_callback_query(call.id, 'Первая страница')
-            page = 1
-        if req[0] == 'last':
-            bot.answer_callback_query(call.id, 'Последняя страница')
-            page = max_page
+        options = {
+            'first': ('Первая страница', 1),
+            'last': ('Последняя страница', max_page)
+        }
+
+        if req[0] in options:
+            message, value = options[req[0]]
+            bot.answer_callback_query(call.id, message)
+            page = value
 
         if req[0] == 'next':
             bot.answer_callback_query(call.id, 'Следующая страница')
-            if page < max_page:
-                page += 1
-            else:
-                page = 1
+            page = page + 1 if page < max_page else 1
 
         if req[0] == 'back':
             bot.answer_callback_query(call.id, 'Предыдущая страница')
-            if page > 1:
-                page -= 1
-            else:
-                page = max_page
+            page = page - 1 if page > 1 else max_page
 
         bot.edit_message_reply_markup(call.from_user.id, call.message.message_id, reply_markup=inline_button(page))
 
