@@ -19,7 +19,7 @@ def document_translate(user, downloaded_file, src):
             text = file.read()
         with open("Перевод.txt", 'w+', encoding='utf-8') as file:
             if get_value.get_spelling:
-                file.write(translate.auto_spelling(text, get_value.get_language, sorting=False).result)
+                file.write(translate.auto_spelling(text, get_value.get_language, sorting=False)[2])
             else:
                 file.write(translate.translate(text, get_value.get_language))
         return True
@@ -38,17 +38,11 @@ def picture_translate(user, downloaded_file):
     result_reader = reader.readtext('translate.jpg', detail=0, paragraph=True)
     text = " ".join(result_reader) if len(result_reader) else 'No text'
     if get_value.get_spelling:
-        result = translate.auto_spelling(text, get_value.get_language, sorting=False).result
+        result = translate.auto_spelling(text, get_value.get_language, sorting=False)[2]
     else:
         result = translate.translate(text, get_value.get_language)
 
-    return PictureTranslate(text, result)
-
-
-class PictureTranslate:
-    def __init__(self, text_recognition, result):
-        self.text_recognition = text_recognition
-        self.result = result
+    return text, result
 
 
 def message_voice(user, text):
@@ -82,12 +76,6 @@ def audio_translate(user, audio_id):
         try:
             text_recognition = recognizer.recognize_google(content, language=language)
             result = translate.translate(text_recognition, get_value.get_language)
-            return AudioTranslate(text_recognition, result)
+            return text_recognition, result
         except speech_recognition.UnknownValueError:
-            return AudioTranslate('Не удалось распознать текст.')
-
-
-class AudioTranslate:
-    def __init__(self, text_recognition, result=''):
-        self.text_recognition = text_recognition
-        self.result = result
+            return 'Не удалось распознать текст.', ''

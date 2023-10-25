@@ -1,4 +1,4 @@
-from googletrans import Translator, LANGUAGES
+from googletrans import Translator
 from pyaspeller import YandexSpeller
 from language import LANGUAGES_RU
 
@@ -7,7 +7,6 @@ class Translate:
 
     def __init__(self):
         self.google_translator = Translator()
-        self.LANGUAGES = LANGUAGES
         self.spelling = YandexSpeller()
         self.detect = Translator().detect
 
@@ -59,7 +58,7 @@ class Translate:
         if spelling_text != text and sorting:
             spelling_text = self.spelling_sorting(spelling_text, text)
 
-        return AutoSpelling(errors_found, spelling_text, result)
+        return errors_found, f"В сообщении найдены ошибки. Исправленный текст:\n\n{spelling_text}", result
 
     @staticmethod
     def spelling_sorting(spelling_text, text) -> str:
@@ -71,20 +70,3 @@ class Translate:
         for i in new_mas:
             corrected_text[corrected_text.index(i)] = f"`{i}`"
         return " ".join(corrected_text)
-
-
-class AutoSpelling:
-    def __init__(self, errors_found, spelling_text, result):
-        self.errors_found = errors_found
-        self.spelling_text = f"В сообщении найдены ошибки. Исправленный текст:\n\n{spelling_text}"
-        self.result = result
-
-    def __dict__(self):
-        return {'errors_found': self.errors_found,
-                'spelling_text': self.spelling_text,
-                'result': self.result}
-
-
-def language_text(language) -> str:
-    # .split()[0] for two-word languages (Японский язык)
-    return LANGUAGES_RU.get(language).split()[0].title()
