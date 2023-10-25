@@ -80,11 +80,10 @@ def switching_spelling(message):
 @bot.message_handler(commands=["search"])
 def search_language(message):
     get_value = Database(message.from_user.id)
+    save_value(message.from_user.id, search=not get_value.get_search)
     if not get_value.get_search:
-        save_value(message.from_user.id, search=True)
         bot.send_message(message.chat.id, 'Поиск включен. Пожалуйста напишите язык который вы хотите найти')
     else:
-        save_value(message.from_user.id, search=False)
         bot.send_message(message.chat.id, 'Поиск выключен')
 
 
@@ -328,12 +327,14 @@ def handler_photo(message):
 @bot.message_handler(content_types=["text"])
 def handler_text(message):
     get_value = Database(message.from_user.id)
+
     if get_value.get_search:
         try:
             bot.send_message(message.chat.id, 'Язык найден:', reply_markup=inline_button(language_page(message.from_user.id, message.text.title())))
             save_value(message.from_user.id, search=False)
         except KeyError:
             bot.send_message(message.chat.id, 'Данного языка еще нету в боте. Пожалуйста попробуйте снова или напишите /search чтобы выключить поиск.')
+
     else:
         bot.send_message(message.chat.id, 'Подождите...')
         translate = Translate()
@@ -342,7 +343,7 @@ def handler_text(message):
         # translation with spell check
         if get_value.get_spelling:
             # checking for errors in the text
-            errors_found, spelling_text, result = translate.auto_spelling(message.text.strip().replace('_', ' '), get_value.get_language)
+            errors_found, spelling_text, result = translate.auto_spelling(message.text.strip(), get_value.get_language)
             if errors_found:
                 # if errors are found
                 bot.edit_message_text(spelling_text, message.chat.id, message.id + 1, parse_mode="Markdown")
@@ -350,7 +351,7 @@ def handler_text(message):
             else:
                 bot.edit_message_text(result, message.chat.id, message.id + 1, reply_markup=markup)
         else:
-            bot.edit_message_text(translate.translate(message.text.strip().replace('_', ' '), get_value.get_language), message.chat.id, message.id + 1, reply_markup=markup)
+            bot.edit_message_text(translate.translate(message.text.strip(), get_value.get_language), message.chat.id, message.id + 1, reply_markup=markup)
 
 
 bot.polling(none_stop=True, interval=0, timeout=25)

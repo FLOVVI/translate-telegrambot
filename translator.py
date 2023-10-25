@@ -24,7 +24,7 @@ class Translate:
 
         """
 
-        text = "No Text" if text == '' else text
+        text = "No Text" if text == '' else text.replace('_', ' ')
 
         detect = self.detect(text)
 
@@ -42,6 +42,7 @@ class Translate:
 
     def auto_spelling(self, text, language, sorting=True):
         """
+
         Logic
         ___________
         check the spelling of the text, correct errors
@@ -49,7 +50,11 @@ class Translate:
         Returns
         ___________
         translation of the corrected text
+
         """
+
+        text = "No Text" if text == '' else text.replace('_', ' ')
+
         # Corrected text
         spelling_text = self.spelling.spelled(text)
         errors_found = True if spelling_text != text else False
