@@ -2,7 +2,6 @@ from config import request_login, request_password
 
 from bs4 import BeautifulSoup as bs
 import requests
-from googletrans import Translator
 
 session = requests.Session()
 

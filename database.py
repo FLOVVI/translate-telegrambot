@@ -2,81 +2,97 @@ import sqlite3
 import random
 
 
-# Temporary function
-def generate_code():
-    letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    repeat = [i[0] for i in sqlite3.connect('translatebot.db').cursor().execute('SELECT code FROM tableone').fetchall()]
-    while True:
-        code = ''
-        # Generate a four-digit code
-        for i in range(4):
-            code += random.choice(letters)
-        if code not in repeat:
-            break
-    return code
+class Add:
+
+    @staticmethod
+    def generate_code():
+        letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        repeat = [i[0] for i in
+                  sqlite3.connect('translatebot.db').cursor().execute('SELECT code FROM main').fetchall()]
+        while True:
+            code = ''
+            # Создаем 4-значный код
+            for i in range(4):
+                code += random.choice(letters)
+            if code not in repeat:
+                break
+        return code
+
+    @staticmethod
+    def search_table():
+        # Проверяем наличие таблицы
+        connect = sqlite3.connect('translatebot.db')
+        cursor = connect.cursor()
+
+        check = cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' and name='main'"
+        )
+
+        # Если таблицы не существует - создаем её
+        if check.fetchone() is None:
+            cursor.execute("CREATE TABLE main ("
+                           "id INT PRIMARY KEY,"
+                           "language STRING,"
+                           "spelling BOOLEAN,"
+                           "first_start BOOLEAN,"
+                           "page INT,"
+                           "code STRING,"
+                           "search BOOLEAN)"
+                           )
+
+    def search_user(self, user):
+
+        # Проверяем наличие пользователя в таблице
+        search_connect = sqlite3.connect('translatebot.db')
+        search_cursor = search_connect.cursor()
+
+        check = search_cursor.execute(
+            "SELECT id FROM main WHERE id = ?", (user,)
+        )
+
+        # Если не находим пользователя - создаем его
+        if check.fetchone() is None:
+            search_cursor.execute("INSERT INTO main VALUES (?, ?, ?, ?, ?, ?, ?)",
+                                  (user, "en", False, True, 1, self.generate_code(), False))
+
+        search_connect.commit()
 
 
 class Database:
     def __init__(self, user, delete=False):
         self.user = user
         if not delete:
-            search_user(user)
+            Add().search_user(self.user)
 
-        get_connect = sqlite3.connect('translatebot.db')
-        get_cursor = get_connect.cursor()
-        self.get_delete_user = True if get_cursor.execute("SELECT id FROM tableone WHERE id = ?", (self.user,)).fetchone() is None else False
-        if not self.get_delete_user:
-            self.get_language = get_cursor.execute(f'SELECT language FROM tableone WHERE id = {self.user}').fetchone()[0]
-            self.get_spelling = get_cursor.execute(f'SELECT spelling FROM tableone WHERE id = {self.user}').fetchone()[0]
-            self.get_first_start = get_cursor.execute(f'SELECT first_start FROM tableone WHERE id = {self.user}').fetchone()[0]
-            self.get_page = get_cursor.execute(f'SELECT page FROM tableone WHERE id = {self.user}').fetchone()[0]
-            self.get_code = get_cursor.execute(f'SELECT code FROM tableone WHERE id = {self.user}').fetchone()[0]
-            self.get_word = get_cursor.execute(f'SELECT word FROM tableone WHERE id = {self.user}').fetchone()[0]
-            self.get_search = get_cursor.execute(f'SELECT search FROM tableone WHERE id = {self.user}').fetchone()[0]
+        connect = sqlite3.connect('translatebot.db')
+        cursor = connect.cursor()
 
+        self.delete_user = True if cursor.execute("SELECT id FROM main WHERE id = ?",
+                                                  (self.user,)).fetchone() is None else False
+        if not self.delete_user:
+            self.language = cursor.execute(f'SELECT language FROM main WHERE id = {self.user}').fetchone()[0]
+            self.spelling = cursor.execute(f'SELECT spelling FROM main WHERE id = {self.user}').fetchone()[0]
+            self.first_start = cursor.execute(f'SELECT first_start FROM main WHERE id = {self.user}').fetchone()[0]
+            self.page = cursor.execute(f'SELECT page FROM main WHERE id = {self.user}').fetchone()[0]
+            self.code = cursor.execute(f'SELECT code FROM main WHERE id = {self.user}').fetchone()[0]
+            self.search = cursor.execute(f'SELECT search FROM main WHERE id = {self.user}').fetchone()[0]
 
-def save_value(user, **kwargs):
-    connect = sqlite3.connect('translatebot.db')
-    cursor = connect.cursor()
-    for key, value in kwargs.items():
-        cursor.execute(f"UPDATE tableone SET {key} = ? WHERE id = ?", (value, user))
-    connect.commit()
+    def save(self, **kwargs):
+        # Сохранение данных в базу
 
+        connect = sqlite3.connect('translatebot.db')
+        cursor = connect.cursor()
 
-def delete_data(user):
-    delete_connect = sqlite3.connect('translatebot.db')
-    delete_cursor = delete_connect.cursor()
-    delete_cursor.execute("DELETE FROM tableone WHERE id = ?", (user,))
-    delete_connect.commit()
+        for key, value in kwargs.items():
+            cursor.execute(f"UPDATE main SET {key} = ? WHERE id = ?", (value, self.user))
+        connect.commit()
 
+    def delete(self):
+        # Удаление всех данных из базы
 
-def search_table():
-    search_connect = sqlite3.connect('translatebot.db')
-    search_cursor = search_connect.cursor()
+        connect = sqlite3.connect('translatebot.db')
+        cursor = connect.cursor()
+        cursor.execute("DELETE FROM main WHERE id = ?", (self.user,))
+        connect.commit()
 
-    check = search_cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' and name='tableone'").fetchone()
-    if len(check) == 0:
-        search_cursor.execute("CREATE TABLE tableone ("
-                              "id INT,"
-                              "language STRING,"
-                              "spelling BOOLEAN,"
-                              "first_start BOOLEAN,"
-                              "page INT,"
-                              "code STRING,"
-                              "word BOOLEAN,"
-                              "search BOOLEAN)")
-
-
-def search_user(user):
-    search_connect = sqlite3.connect('translatebot.db')
-    search_cursor = search_connect.cursor()
-
-    if search_cursor.execute("SELECT id FROM tableone WHERE id = ?", (user,)).fetchone() is None:
-        search_cursor.execute("INSERT INTO tableone VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                              (user, "en", False, True, 1, generate_code(), False, False))
-
-    search_connect.commit()
-
-
-search_table()
+Add().search_table()

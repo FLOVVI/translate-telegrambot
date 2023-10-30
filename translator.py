@@ -1,34 +1,26 @@
 from googletrans import Translator
 from pyaspeller import YandexSpeller
-from language import LANGUAGES_RU
 
 
 class Translate:
+    # Умный перевод эксклюзивно для этого бота
 
     def __init__(self):
         self.google_translator = Translator()
-        self.spelling = YandexSpeller()
+        self.speller = YandexSpeller()
         self.detect = Translator().detect
+        # Переменные для проверки орфографии
+        self.errors_found = False
+        self.spelling_text = ''
+        self.result = ''
 
-    def translate(self, text, language) -> str:
-        """
-
-        Logic
-        ___________
-        if the user translates into the language of the text he translated
-        then we translate by default into Russian
-
-        Returns
-        ___________
-        User text translation
-
-        """
+    def translate(self, text, language):
 
         text = "No Text" if text == '' else text.replace('_', ' ')
 
         detect = self.detect(text)
 
-        # Smart translation from Belarusian and Ukrainian is incorrect
+        # Умный перевод для Беларусского и Украинского языка работает некорректно
         if language not in ['be', 'uk']:
             if detect.lang == language:
                 if language == "ru":
@@ -40,30 +32,19 @@ class Translate:
         else:
             return f'[{language}] {self.google_translator.translate(text, dest=language).text}'
 
+
+class AutoSpelling(Translate):
     def auto_spelling(self, text, language, sorting=True):
-        """
-
-        Logic
-        ___________
-        check the spelling of the text, correct errors
-
-        Returns
-        ___________
-        translation of the corrected text
-
-        """
 
         text = "No Text" if text == '' else text.replace('_', ' ')
 
         # Corrected text
-        spelling_text = self.spelling.spelled(text)
-        errors_found = True if spelling_text != text else False
+        spelling_text = self.speller.spelled(text)
+        self.errors_found = True if spelling_text != text else False
         # Translation of the corrected text
-        result = self.translate(spelling_text, language)
+        self.result = self.translate(spelling_text, language)
         if spelling_text != text and sorting:
-            spelling_text = self.spelling_sorting(spelling_text, text)
-
-        return errors_found, f"В сообщении найдены ошибки. Исправленный текст:\n\n{spelling_text}", result
+            self.spelling_text = f"В сообщении найдены ошибки. Исправленный текст:\n\n{self.spelling_sorting(spelling_text, text)}"
 
     @staticmethod
     def spelling_sorting(spelling_text, text) -> str:

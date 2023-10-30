@@ -4,78 +4,71 @@ import soundfile
 import speech_recognition
 from gtts import gTTS
 
-from translator import Translate
+from translator import Translate, AutoSpelling
 from database import Database
 
 
-def document_translate(user, downloaded_file, src):
-    get_value = Database(user)
-    translate = Translate()
+class OtherTranslate:
+    def __init__(self, user):
+        self.database = Database(user)
+        self.translate = Translate()
+        self.auto_spelling = AutoSpelling()
 
-    with open(src, 'wb') as new_file:
-        new_file.write(downloaded_file)
-    try:
-        with open(src, 'r+', encoding='utf-8') as file:
-            text = file.read()
-        with open("Перевод.txt", 'w+', encoding='utf-8') as file:
-            if get_value.get_spelling:
-                file.write(translate.auto_spelling(text, get_value.get_language, sorting=False)[2])
-            else:
-                file.write(translate.translate(text, get_value.get_language))
-        return True
-    except UnicodeDecodeError:
-        return False
-
-
-def picture_translate(user, downloaded_file):
-    get_value = Database(user)
-    translate = Translate()
-
-    with open("translate.jpg", 'wb') as file:
-        file.write(downloaded_file)
-
-    reader = easyocr.Reader(["ru", "en"], gpu=False)
-    result_reader = reader.readtext('translate.jpg', detail=0, paragraph=True)
-    text = " ".join(result_reader) if len(result_reader) else 'No text'
-    if get_value.get_spelling:
-        result = translate.auto_spelling(text, get_value.get_language, sorting=False)[2]
-    else:
-        result = translate.translate(text, get_value.get_language)
-
-    return text, result
-
-
-def message_voice(user, text):
-    get_value = Database(user)
-    lang = Translate().detect(text).lang
-
-    tts = gTTS(text=text, lang=lang)
-    tts.save(f'{get_value.get_code}.ogg')
-
-    return f'{get_value.get_code}.ogg'
-
-
-def audio_translate(user, audio_id):
-    translate = Translate()
-    get_value = Database(user)
-
-    language = 'ru-RU' if get_value.get_language == 'en' else 'en-US'
-
-    # Convert
-    data, samplerate = soundfile.read(f'{audio_id}.ogg')
-    soundfile.write(f'{audio_id}.wav', data, samplerate)
-    os.remove(f'{audio_id}.ogg')
-
-    # Recognition
-    recognizer = speech_recognition.Recognizer()
-    sample = speech_recognition.WavFile(os.path.abspath(f"{audio_id}.wav"))
-    with sample as audio:
-        recognizer.adjust_for_ambient_noise(audio)
-        content = recognizer.record(audio)
-
+    def document_translate(self, downloaded_file, src):
+        with open(src, 'wb') as new_file:
+            new_file.write(downloaded_file)
         try:
-            text_recognition = recognizer.recognize_google(content, language=language)
-            result = translate.translate(text_recognition, get_value.get_language)
-            return text_recognition, result
-        except speech_recognition.UnknownValueError:
-            return 'Не удалось распознать текст.', ''
+            with open(src, 'r+', encoding='utf-8') as file:
+                text = file.read()
+            with open("Перевод.txt", 'w+', encoding='utf-8') as file:
+                if self.database.spelling:
+                    self.auto_spelling.auto_spelling(text, self.database.language, sorting=False)
+                    file.write(self.auto_spelling.result)
+                else:
+                    file.write(self.translate.translate(text, self.database.language))
+            return True
+        except UnicodeDecodeError:
+            return False
+
+    def picture_translate(self, downloaded_file):
+        with open("translate.jpg", 'wb') as file:
+            file.write(downloaded_file)
+
+        reader = easyocr.Reader(["ru", "en"], gpu=False)
+        result_reader = reader.readtext('translate.jpg', detail=0, paragraph=True)
+        text = " ".join(result_reader) if len(result_reader) else 'No text'
+        if self.database.spelling:
+            self.auto_spelling.auto_spelling(text, self.database.language, sorting=False)
+            result = self.auto_spelling.result
+        else:
+            result = self.translate.translate(text, self.database.language)
+
+        return text, result
+
+    def audio_translate(self, audio_id):
+        # Конвертируем
+        data, samplerate = soundfile.read(f'{audio_id}.ogg')
+        soundfile.write(f'{audio_id}.wav', data, samplerate)
+        os.remove(f'{audio_id}.ogg')
+
+        # Распознаем
+        recognizer = speech_recognition.Recognizer()
+        sample = speech_recognition.WavFile(os.path.abspath(f"{audio_id}.wav"))
+        with sample as audio:
+            recognizer.adjust_for_ambient_noise(audio)
+            content = recognizer.record(audio)
+
+            try:
+                text_recognition = recognizer.recognize_google(content, language='ru-RU')
+                result = self.translate.translate(text_recognition, self.database.language)
+                return text_recognition, result
+            except speech_recognition.UnknownValueError:
+                return 'Не удалось распознать текст.', ''
+
+    def message_voice(self, text):
+        lang = self.translate.detect(text).lang
+
+        tts = gTTS(text=text, lang=lang)
+        tts.save(f'{self.database.code}.ogg')
+
+        return f'{self.database.code}.ogg'
