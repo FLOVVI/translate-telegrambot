@@ -3,6 +3,7 @@ import easyocr
 import soundfile
 import speech_recognition
 from gtts import gTTS
+from PIL import Image
 
 from translator import Translate, AutoSpelling
 from database import Database
@@ -13,8 +14,6 @@ class OtherTranslate:
         self.database = Database(user)
         self.translate = Translate()
         self.auto_spelling = AutoSpelling()
-        print(self.translate)
-        print(type(self.translate))
 
     def document_translate(self, downloaded_file, src):
         with open(src, 'wb') as new_file:
@@ -35,6 +34,10 @@ class OtherTranslate:
     def picture_translate(self, downloaded_file):
         with open("translate.jpg", 'wb') as file:
             file.write(downloaded_file)
+
+        image = Image.open("translate.jpg")
+        image = image.convert('L')
+        image.save("translate.jpg")
 
         reader = easyocr.Reader(["ru", "en"], gpu=False)
         result_reader = reader.readtext('translate.jpg', detail=0, paragraph=True)
