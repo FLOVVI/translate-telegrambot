@@ -13,6 +13,8 @@ class OtherTranslate:
         self.database = Database(user)
         self.translate = Translate()
         self.auto_spelling = AutoSpelling()
+        print(self.translate)
+        print(type(self.translate))
 
     def document_translate(self, downloaded_file, src):
         with open(src, 'wb') as new_file:

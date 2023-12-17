@@ -37,12 +37,15 @@ def start(message):
     database = Database(message.from_user.id)
 
     if database.first_start:
-        bot.send_message(message.chat.id, 'Выберите на какой язык переводить:\n\nДля поиска нужного языка используйте /search', reply_markup=InlineButton().inline_button(database.page))
+        bot.send_message(message.chat.id,
+                         'Выберите на какой язык переводить:\n\nДля поиска нужного языка используйте /search',
+                         reply_markup=InlineButton().inline_button(database.page))
         database.save(first_start=False)
     else:
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Сменить язык", callback_data='menu'))
-        bot.send_message(message.chat.id, f"Вы переводите на {InlineButton().language_text(database.language)} язык", reply_markup=markup)
+        bot.send_message(message.chat.id, f"Вы переводите на {InlineButton().language_text(database.language)} язык",
+                         reply_markup=markup)
 
 
 # Удаление данных пользователя
@@ -83,10 +86,39 @@ def search_language(message):
         bot.send_message(message.chat.id, 'Поиск выключен')
 
 
+@bot.inline_handler(func=lambda query: len(query.query) > 0)
+def query_text(query):
+    translate = Translate()
+    database = Database(query.from_user.id)
+    try:
+        bot.answer_inline_query(query.id, [types.InlineQueryResultArticle(
+            id='1',
+            title=f"Переводим...",
+            description=translate.translate(query.query, database.language),
+            input_message_content=types.InputTextMessageContent(message_text=f'{translate.translate(query.query, database.language, prefix=False)}')
+        )])
+    except Exception:
+        pass
+
+
+@bot.inline_handler(func=lambda query: len(query.query) == 0)
+def empty_query(query):
+    database = Database(query.from_user.id)
+    inline = InlineButton()
+    try:
+        bot.answer_inline_query(query.id, [types.InlineQueryResultArticle(
+            id='1',
+            title="Translate",
+            description=f'Введите слово для перевода на {inline.language_text(database.language)} язык',
+            input_message_content=types.InputTextMessageContent(message_text="А где слово?")
+        )])
+    except Exception:
+        pass
+
+
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     database = Database(call.from_user.id)
-    database.search_user(call.from_user.id)
     inline = InlineButton()
     req = call.data
 
@@ -112,7 +144,8 @@ def callback_query(call):
             bot.answer_callback_query(call.id, 'Предыдущая страница')
             page = page - 1 if page > 1 else inline.max_page
 
-        bot.edit_message_reply_markup(call.from_user.id, call.message.message_id, reply_markup=inline.inline_button(page))
+        bot.edit_message_reply_markup(call.from_user.id, call.message.message_id,
+                                      reply_markup=inline.inline_button(page))
 
         database.save(page=page)
 
@@ -132,7 +165,7 @@ def callback_query(call):
         text.remove(text[0])
 
         try:
-            voice = OtherTranslate.message_voice(call.from_user.id, " ".join(text))
+            voice = OtherTranslate(call.from_user.id).message_voice(" ".join(text))
 
             # Заканчиваем запрос
             event.set()
@@ -153,7 +186,7 @@ def callback_query(call):
     elif req == 'res':
         bot.answer_callback_query(call.id, 'Данные восстановлены')
 
-        database.search_user(call.from_user.id)
+        Database(call.from_user.id)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Удалить", callback_data='del'))
         bot.edit_message_text('Данные восстановлены. Удалить ваши данные?',
@@ -223,7 +256,6 @@ def handler_audio(message):
 
     bot.edit_message_text(f"Распознанный текст:\n\n{text_recognition}", message.chat.id, message.id + 1)
     if text_recognition != 'Не удалось распознать текст.':
-
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
 
@@ -235,7 +267,6 @@ def handler_audio(message):
 # Перевод документов
 @bot.message_handler(content_types=['document'])
 def handler_document(message):
-
     event = Event()
     # Ожидание выполнения запроса
     bot.send_message(message.chat.id, '⏳Подождите')
@@ -272,7 +303,6 @@ def handler_document(message):
 # Перевод фото
 @bot.message_handler(content_types=['photo'])
 def handler_photo(message):
-
     # Ожидание выполнения запроса
     bot.send_message(message.chat.id, "⏳Подождите")
     event = Event()
@@ -291,7 +321,7 @@ def handler_photo(message):
             file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
             downloaded_file = bot.download_file(file_info.file_path)
             # Переводим файл
-            text, result = OtherTranslate(message.from_user.id,).picture_translate(downloaded_file)
+            text, result = OtherTranslate(message.from_user.id, ).picture_translate(downloaded_file)
 
             # Заканчиваем запрос
             event.set()
@@ -311,7 +341,9 @@ def handler_photo(message):
         # Заканчиваем запрос
         event.set()
 
-        bot.edit_message_text(f"Сервер перегружен. Пожалуйста повторите попытку через {Translate().translate(server.resets_text,'ru')[5:]}", message.chat.id, message.id + 1)
+        bot.edit_message_text(
+            f"Сервер перегружен. Пожалуйста повторите попытку через {Translate().translate(server.resets_text, 'ru')[5:]}",
+            message.chat.id, message.id + 1)
 
 
 # Message from user for translation
@@ -319,12 +351,15 @@ def handler_photo(message):
 def handler_text(message):
     database = Database(message.from_user.id)
 
+    # Поиск включен
     if database.search:
         try:
-            bot.send_message(message.chat.id, 'Язык найден:', reply_markup=InlineButton().inline_button(InlineButton().language_page(message.from_user.id, message.text.title())))
+            bot.send_message(message.chat.id, 'Язык найден:', reply_markup=InlineButton().inline_button(
+                InlineButton().language_page(message.from_user.id, message.text.title())))
             database.save(search=False)
         except KeyError:
-            bot.send_message(message.chat.id, 'Данного языка еще нету в боте. Пожалуйста попробуйте снова или напишите /search чтобы выключить поиск.')
+            bot.send_message(message.chat.id,
+                             'Данного языка еще нету в боте. Пожалуйста попробуйте снова или напишите /search чтобы выключить поиск.')
 
     else:
         bot.send_message(message.chat.id, 'Подождите...')
@@ -338,11 +373,15 @@ def handler_text(message):
             auto_spelling.auto_spelling(message.text.strip(), database.language)
             if auto_spelling.errors_found:
                 # Если ошибки найдены
-                bot.edit_message_text(auto_spelling.spelling_text, message.chat.id, message.id + 1, parse_mode="Markdown")
+                bot.edit_message_text(auto_spelling.spelling_text, message.chat.id, message.id + 1,
+                                      parse_mode="Markdown")
                 bot.send_message(message.chat.id, auto_spelling.result, reply_markup=markup)
             else:
                 bot.edit_message_text(auto_spelling.result, message.chat.id, message.id + 1, reply_markup=markup)
         else:
             # Обычный перевод
-            bot.edit_message_text(translate.translate(message.text.strip(), database.language), message.chat.id, message.id + 1, reply_markup=markup)
+            bot.edit_message_text(translate.translate(message.text.strip(), database.language), message.chat.id,
+                                  message.id + 1, reply_markup=markup)
+
+
 bot.polling(none_stop=True, interval=0, timeout=25)

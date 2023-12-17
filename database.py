@@ -1,5 +1,37 @@
 import sqlite3
 import random
+import time
+from threading import Thread
+from database_cloud import DatabaseCloud
+from config import yadisk_token, server
+
+cloud = DatabaseCloud(yadisk_token)
+
+cloud.download('translatebot.db', 'translatebot.db')
+print('База данных установлена.')
+
+
+class Data:
+    upload_timer = True
+
+data = Data()
+
+
+def timer():
+    data.upload_timer = False
+    time.sleep(120)
+    data.upload_timer = True
+
+
+def upload():
+
+    th = Thread(target=timer)
+    th.start()
+
+    try:
+        cloud.upload('translatebot.db', 'translatebot.db')
+    except:
+        cloud.upload('translatebot.db', 'translatebot.db', remove=False)
 
 
 class Add:
@@ -77,6 +109,8 @@ class Database:
             self.code = cursor.execute(f'SELECT code FROM main WHERE id = {self.user}').fetchone()[0]
             self.search = cursor.execute(f'SELECT search FROM main WHERE id = {self.user}').fetchone()[0]
 
+        connect.close()
+
     def save(self, **kwargs):
         # Сохранение данных в базу
 
@@ -86,6 +120,12 @@ class Database:
         for key, value in kwargs.items():
             cursor.execute(f"UPDATE main SET {key} = ? WHERE id = ?", (value, self.user))
         connect.commit()
+        connect.close()
+
+        if server:
+            if data.upload_timer:
+                th = Thread(target=upload)
+                th.start()
 
     def delete(self):
         # Удаление всех данных из базы
@@ -94,5 +134,12 @@ class Database:
         cursor = connect.cursor()
         cursor.execute("DELETE FROM main WHERE id = ?", (self.user,))
         connect.commit()
+        connect.close()
+
+        if server:
+            if data.upload_timer:
+                th = Thread(target=upload)
+                th.start()
+
 
 Add().search_table()

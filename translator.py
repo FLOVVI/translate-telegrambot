@@ -14,7 +14,7 @@ class Translate:
         self.spelling_text = ''
         self.result = ''
 
-    def translate(self, text, language):
+    def translate(self, text, language, prefix=True):
 
         text = "No Text" if text == '' else text.replace('_', ' ')
 
@@ -24,13 +24,13 @@ class Translate:
         if language not in ['be', 'uk']:
             if detect.lang == language:
                 if language == "ru":
-                    return f'[en] {self.google_translator.translate(text, dest="en").text}'
+                    return f'[en] {self.google_translator.translate(text, dest="en").text}' if prefix else f'{self.google_translator.translate(text, dest="en").text}'
                 else:
-                    return f'[ru] {self.google_translator.translate(text, dest="ru").text}'
+                    return f'[ru] {self.google_translator.translate(text, dest="ru").text}' if prefix else f'{self.google_translator.translate(text, dest="ru").text}'
             else:
-                return f'[{language}] {self.google_translator.translate(text, dest=language).text}'
+                return f'[{language}] {self.google_translator.translate(text, dest=language).text}' if prefix else f'{self.google_translator.translate(text, dest=language).text}'
         else:
-            return f'[{language}] {self.google_translator.translate(text, dest=language).text}'
+            return f'[{language}] {self.google_translator.translate(text, dest=language).text}' if prefix else f'{self.google_translator.translate(text, dest=language).text}'
 
 
 class AutoSpelling(Translate):
