@@ -24,7 +24,7 @@ class Translate:
         if language not in ['be', 'uk']:
             if detect.lang == language:
                 if language == "ru":
-                    return f' {self.google_translator.translate(text, dest="en").text}' if prefix else f'{self.google_translator.translate(text, dest="en").text}'
+                    return f'[en] {self.google_translator.translate(text, dest="en").text}' if prefix else f'{self.google_translator.translate(text, dest="en").text}'
                 else:
                     return f'[ru] {self.google_translator.translate(text, dest="ru").text}' if prefix else f'{self.google_translator.translate(text, dest="ru").text}'
             else:
