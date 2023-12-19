@@ -1,4 +1,5 @@
 from config import request_login, request_password
+from dataclasses import dataclass
 
 from bs4 import BeautifulSoup as bs
 import requests
@@ -41,10 +42,9 @@ def server_load():
     return ServerLoad(usage_percentage, usage_second, usage_max_second, resets_text)
 
 
+@dataclass()
 class ServerLoad:
-    def __init__(self, usage_percentage, usage_second, usage_max_second, resets_text):
-        self.usage_percentage = usage_percentage
-        self.usage_second = usage_second
-        self.usage_max_second = usage_max_second
-        self.resets_text = resets_text
-        self.statistics_text = f"CPU использовано: {self.usage_percentage}% - {self.usage_second}/{self.usage_max_second} секунд. Сброс через {self.resets_text}"
+    usage_percentage: str
+    usage_second: str
+    usage_max_second: str
+    resets_text: str

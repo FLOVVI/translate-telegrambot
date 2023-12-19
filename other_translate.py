@@ -1,4 +1,5 @@
 import os
+
 import easyocr
 import soundfile
 import speech_recognition
@@ -15,13 +16,13 @@ class OtherTranslate:
         self.translate = Translate()
         self.auto_spelling = AutoSpelling()
 
-    def document_translate(self, downloaded_file, src):
-        with open(src, 'wb') as new_file:
+    def document_translate(self, downloaded_file, file_path):
+        with open(file_path, 'wb') as new_file:
             new_file.write(downloaded_file)
         try:
-            with open(src, 'r+', encoding='utf-8') as file:
+            with open(file_path, 'r+', encoding='utf-8') as file:
                 text = file.read()
-            with open("Перевод.txt", 'w+', encoding='utf-8') as file:
+            with open(file_path, 'w+', encoding='utf-8') as file:
                 if self.database.spelling:
                     self.auto_spelling.auto_spelling(text, self.database.language, sorting=False)
                     file.write(self.auto_spelling.result)
@@ -31,17 +32,18 @@ class OtherTranslate:
         except UnicodeDecodeError:
             return False
 
-    def picture_translate(self, downloaded_file):
-        with open("translate.jpg", 'wb') as file:
+    def picture_translate(self, downloaded_file, file_path):
+
+        with open(file_path, 'wb') as file:
             file.write(downloaded_file)
 
-        image = Image.open("translate.jpg")
+        image = Image.open(file_path)
         image = image.convert('L')
-        image.save("translate.jpg")
+        image.save(file_path)
 
         reader = easyocr.Reader(["ru", "en"], gpu=False)
-        result_reader = reader.readtext('translate.jpg', detail=0, paragraph=True)
-        text = " ".join(result_reader) if len(result_reader) else 'No text'
+        result_reader = reader.readtext(file_path, detail=0, paragraph=True)
+        text = " ".join(result_reader) if len(result_reader) else 'Текст не найден'
         if self.database.spelling:
             self.auto_spelling.auto_spelling(text, self.database.language, sorting=False)
             result = self.auto_spelling.result
@@ -50,15 +52,15 @@ class OtherTranslate:
 
         return text, result
 
-    def audio_translate(self, audio_id):
+    def audio_translate(self, file_path):
         # Конвертируем
-        data, samplerate = soundfile.read(f'{audio_id}.ogg')
-        soundfile.write(f'{audio_id}.wav', data, samplerate)
-        os.remove(f'{audio_id}.ogg')
+        data, samplerate = soundfile.read(f'{file_path}.ogg')
+        soundfile.write(f'{file_path}.wav', data, samplerate)
+        os.remove(f'{file_path}.ogg')
 
         # Распознаем
         recognizer = speech_recognition.Recognizer()
-        sample = speech_recognition.WavFile(os.path.abspath(f"{audio_id}.wav"))
+        sample = speech_recognition.WavFile(os.path.abspath(f"{file_path}.wav"))
         with sample as audio:
             recognizer.adjust_for_ambient_noise(audio)
             content = recognizer.record(audio)
@@ -70,10 +72,10 @@ class OtherTranslate:
             except speech_recognition.UnknownValueError:
                 return 'Не удалось распознать текст.', ''
 
-    def message_voice(self, text):
+    def message_voice(self, text, file_path):
         lang = self.translate.detect(text).lang
 
         tts = gTTS(text=text, lang=lang)
-        tts.save(f'{self.database.code}.ogg')
+        tts.save(f'{file_path}.ogg')
 
-        return f'{self.database.code}.ogg'
+        return f'{file_path}.ogg'

@@ -3,12 +3,12 @@ import random
 import time
 from threading import Thread
 from database_cloud import DatabaseCloud
-from config import yadisk_token, server
+from config import yadisk_token, server_usage
 
 cloud = DatabaseCloud(yadisk_token)
-
-cloud.download('translatebot.db', 'translatebot.db')
-print('База данных установлена.')
+if server_usage:
+    cloud.download('translatebot.db', 'translatebot.db')
+    print('База данных установлена.')
 
 
 class Data:
@@ -43,8 +43,8 @@ class Add:
                   sqlite3.connect('translatebot.db').cursor().execute('SELECT code FROM main').fetchall()]
         while True:
             code = ''
-            # Создаем 4-значный код
-            for i in range(4):
+            # Создаем 6-и значный код
+            for i in range(6):
                 code += random.choice(letters)
             if code not in repeat:
                 break
@@ -69,7 +69,8 @@ class Add:
                            "first_start BOOLEAN,"
                            "page INT,"
                            "code STRING,"
-                           "search BOOLEAN)"
+                           "search BOOLEAN,"
+                           "expectation BOOLEAN)"
                            )
 
     def search_user(self, user):
@@ -84,8 +85,8 @@ class Add:
 
         # Если не находим пользователя - создаем его
         if check.fetchone() is None:
-            search_cursor.execute("INSERT INTO main VALUES (?, ?, ?, ?, ?, ?, ?)",
-                                  (user, "en", False, True, 1, self.generate_code(), False))
+            search_cursor.execute("INSERT INTO main VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                  (user, "en", False, True, 1, self.generate_code(), False, False))
 
         search_connect.commit()
 
@@ -108,6 +109,7 @@ class Database:
             self.page = cursor.execute(f'SELECT page FROM main WHERE id = {self.user}').fetchone()[0]
             self.code = cursor.execute(f'SELECT code FROM main WHERE id = {self.user}').fetchone()[0]
             self.search = cursor.execute(f'SELECT search FROM main WHERE id = {self.user}').fetchone()[0]
+            self.expectation = cursor.execute(f'SELECT expectation FROM main WHERE id = {self.user}').fetchone()[0]
 
         connect.close()
 
@@ -122,7 +124,7 @@ class Database:
         connect.commit()
         connect.close()
 
-        if server:
+        if server_usage:
             if data.upload_timer:
                 th = Thread(target=upload)
                 th.start()
@@ -136,7 +138,7 @@ class Database:
         connect.commit()
         connect.close()
 
-        if server:
+        if server_usage:
             if data.upload_timer:
                 th = Thread(target=upload)
                 th.start()

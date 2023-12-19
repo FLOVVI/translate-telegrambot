@@ -6,7 +6,7 @@ from threading import Thread, Event
 import telebot
 from telebot import types
 
-from config import token
+from config import token, server_usage
 from database import Database
 from language import InlineButton
 from translator import Translate, AutoSpelling
@@ -17,12 +17,15 @@ print("Active")
 bot = telebot.TeleBot(token)
 
 
-def edit_message(chat_id, last_message_id, event):
+def edit_message(chat_id, last_message_id, user, event):
     state = 0
+    database = Database(user)
+    database.save(expectation=True)
     for i in range(150):
         state = state + 1 if state < 3 else 0
 
         if event.is_set():
+            database.save(expectation=False)
             break
 
         text = f"{'⏳' if state % 2 == 0 else '⌛'}Подождите{'.' * state}"
@@ -35,17 +38,17 @@ def edit_message(chat_id, last_message_id, event):
 @bot.message_handler(commands=["start", "language"])
 def start(message):
     database = Database(message.from_user.id)
-
-    if database.first_start:
-        bot.send_message(message.chat.id,
-                         'Выберите на какой язык переводить:\n\nДля поиска нужного языка используйте /search',
-                         reply_markup=InlineButton().inline_button(database.page))
-        database.save(first_start=False)
-    else:
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("Сменить язык", callback_data='menu'))
-        bot.send_message(message.chat.id, f"Вы переводите на {InlineButton().language_text(database.language)} язык",
-                         reply_markup=markup)
+    if not database.expectation:  # Проверяем выполняются ли другие запросы
+        if database.first_start:
+            bot.send_message(message.chat.id,
+                             'Выберите на какой язык переводить:\n\nДля поиска нужного языка используйте /search',
+                             reply_markup=InlineButton().inline_button(database.page))
+            database.save(first_start=False)
+        else:
+            markup = types.InlineKeyboardMarkup()
+            markup.add(types.InlineKeyboardButton("Сменить язык", callback_data='menu'))
+            bot.send_message(message.chat.id, f"Вы переводите на {InlineButton().language_text(database.language)} язык",
+                             reply_markup=markup)
 
 
 # Удаление данных пользователя
@@ -66,13 +69,13 @@ def delete_id(message):
 def switching_spelling(message):
     database = Database(message.from_user.id)
     markup = types.InlineKeyboardMarkup()
-
-    if database.spelling:
-        markup.add(types.InlineKeyboardButton("Выключить", callback_data='off'))
-        bot.send_message(message.chat.id, 'Автоматическая проверка текста включена', reply_markup=markup)
-    else:
-        markup.add(types.InlineKeyboardButton("Включить", callback_data='on'))
-        bot.send_message(message.chat.id, 'Автоматическая проверка текста выключена', reply_markup=markup)
+    if not database.expectation:
+        if database.spelling:
+            markup.add(types.InlineKeyboardButton("Выключить", callback_data='off'))
+            bot.send_message(message.chat.id, 'Автоматическая проверка текста включена', reply_markup=markup)
+        else:
+            markup.add(types.InlineKeyboardButton("Включить", callback_data='on'))
+            bot.send_message(message.chat.id, 'Автоматическая проверка текста выключена', reply_markup=markup)
 
 
 # Поиск языка
@@ -80,10 +83,11 @@ def switching_spelling(message):
 def search_language(message):
     database = Database(message.from_user.id)
     database.save(search=not database.search)
-    if not database.search:
-        bot.send_message(message.chat.id, 'Поиск включен. Пожалуйста напишите язык который вы хотите найти')
-    else:
-        bot.send_message(message.chat.id, 'Поиск выключен')
+    if not database.expectation:
+        if not database.search:
+            bot.send_message(message.chat.id, 'Поиск включен. Пожалуйста напишите язык который вы хотите найти')
+        else:
+            bot.send_message(message.chat.id, 'Поиск выключен')
 
 
 @bot.inline_handler(func=lambda query: len(query.query) > 0)
@@ -93,7 +97,7 @@ def query_text(query):
     try:
         bot.answer_inline_query(query.id, [types.InlineQueryResultArticle(
             id='1',
-            title=f"Переводим...",
+            title=f"Перевожу...",
             description=translate.translate(query.query, database.language),
             input_message_content=types.InputTextMessageContent(message_text=f'{translate.translate(query.query, database.language, prefix=False)}')
         )])
@@ -157,7 +161,7 @@ def callback_query(call):
         # Ожидание выполнения запроса
         bot.send_message(call.message.chat.id, '⏳Подождите')
         event = Event()
-        th = Thread(target=edit_message, args=(call.message.chat.id, call.message.id + 1, event))
+        th = Thread(target=edit_message, args=(call.message.chat.id, call.message.id + 1, call.from_user.id, event))
         th.start()
 
         # Избавляемся от [lang]
@@ -165,7 +169,7 @@ def callback_query(call):
         text.remove(text[0])
 
         try:
-            voice = OtherTranslate(call.from_user.id).message_voice(" ".join(text))
+            voice = OtherTranslate(call.from_user.id).message_voice(" ".join(text), database.code)
 
             # Заканчиваем запрос
             event.set()
@@ -237,151 +241,160 @@ def callback_query(call):
 @bot.message_handler(content_types=['voice'])
 def handler_audio(message):
     # Ожидание выполнения запроса
-    bot.send_message(message.chat.id, '⏳Подождите')
-    event = Event()
-    th = Thread(target=edit_message, args=(message.chat.id, message.id + 1, event))
-    th.start()
-
     database = Database(message.from_user.id)
+    if not database.expectation:
+        bot.send_message(message.chat.id, '⏳Подождите')
+        event = Event()
+        th = Thread(target=edit_message, args=(message.chat.id, message.id + 1, message.from_user.id, event))
+        th.start()
 
-    file_info = bot.get_file(message.voice.file_id)
-    file_download = requests.get(f'https://api.telegram.org/file/bot{token}/{file_info.file_path}')
+        database = Database(message.from_user.id)
+        file_path = database.code
 
-    with open(f'{database.code}.ogg', 'wb') as file:
-        file.write(file_download.content)
-    text_recognition, result = OtherTranslate(message.from_user.id).audio_translate(database.code)
+        file_info = bot.get_file(message.voice.file_id)
+        file_download = requests.get(f'https://api.telegram.org/file/bot{token}/{file_info.file_path}')
 
-    # Заканчиваем запрос
-    event.set()
+        with open(f'{file_path}.ogg', 'wb') as file:
+            file.write(file_download.content)
+        text_recognition, result = OtherTranslate(message.from_user.id).audio_translate(file_path)
 
-    bot.edit_message_text(f"Распознанный текст:\n\n{text_recognition}", message.chat.id, message.id + 1)
-    if text_recognition != 'Не удалось распознать текст.':
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
+        # Заканчиваем запрос
+        event.set()
 
-        bot.send_message(message.chat.id, result, reply_markup=markup)
+        bot.edit_message_text(f"Распознанный текст:\n\n{text_recognition}", message.chat.id, message.id + 1)
+        if text_recognition != 'Не удалось распознать текст.':
+            markup = types.InlineKeyboardMarkup()
+            markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
 
-    os.remove(f'{database.code}.wav')
+            bot.send_message(message.chat.id, result, reply_markup=markup)
+
+        os.remove(f'{file_path}.wav')
 
 
 # Перевод документов
 @bot.message_handler(content_types=['document'])
 def handler_document(message):
-    event = Event()
-    # Ожидание выполнения запроса
-    bot.send_message(message.chat.id, '⏳Подождите')
-    th = Thread(target=edit_message, args=(message.chat.id, message.id + 1, event))
-    th.start()
+    database = Database(message.from_user.id)
+    if not database.expectation:
+        event = Event()
+        # Ожидание выполнения запроса
+        bot.send_message(message.chat.id, '⏳Подождите')
+        th = Thread(target=edit_message, args=(message.chat.id, message.id + 1, message.from_user.id, event))
+        th.start()
 
-    try:
-        # Скачиваем файл
-        file_info = bot.get_file(message.document.file_id)
-        downloaded_file = bot.download_file(file_info.file_path)
-        # Ссылка на файл
-        src = message.document.file_name
-        # Перевод файла
-        document = OtherTranslate(message.from_user.id).document_translate(downloaded_file, src)
-        if not document:
+        try:
+            # Скачиваем файл
+            file_info = bot.get_file(message.document.file_id)
+            downloaded_file = bot.download_file(file_info.file_path)
+            # Файл
+            file_path = f'{database.code}.txt'
+            # Перевод файла
+            document = OtherTranslate(message.from_user.id).document_translate(downloaded_file, file_path)
+            if not document:
+                event.set()
+                bot.edit_message_text("Неподдерживаемый тип файла", message.chat.id, message.id + 1)
+            # Если нет ошибок
+            else:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    bot.send_document(message.chat.id, file)
+
+                # Заканчиваем запрос
+                event.set()
+                bot.delete_message(message.chat.id, message.id + 1)
+
+            os.remove(file_path)
+
+        except:
             event.set()
             bot.edit_message_text("Неподдерживаемый тип файла", message.chat.id, message.id + 1)
-        # Если нет ошибок
-        else:
-            with open("Перевод.txt", 'r', encoding='utf-8') as file:
-                bot.send_document(message.chat.id, file)
-            os.remove("Перевод.txt")
-        os.remove(src)
-
-        # Заканчиваем запрос
-        event.set()
-        bot.delete_message(message.chat.id, message.id + 1)
-
-    except:
-        event.set()
-        bot.edit_message_text("Неподдерживаемый тип файла", message.chat.id, message.id + 1)
 
 
 # Перевод фото
 @bot.message_handler(content_types=['photo'])
 def handler_photo(message):
-    # Ожидание выполнения запроса
-    bot.send_message(message.chat.id, "⏳Подождите")
-    event = Event()
-    th = Thread(target=edit_message, args=(message.chat.id, message.id + 1, event))
-    th.start()
+    database = Database(message.from_user.id)
+    if not database.expectation:
+        # Ожидание выполнения запроса
+        bot.send_message(message.chat.id, "⏳Подождите")
+        event = Event()
+        th = Thread(target=edit_message, args=(message.chat.id, message.id + 1, message.from_user.id, event))
+        th.start()
 
-    server = server_load()
+        server = server_load()
 
-    if int(server.usage_percentage) < 65:
-        try:
-
-            markup = types.InlineKeyboardMarkup()
-            markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
-
-            # Скачиваем файл
-            file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
-            downloaded_file = bot.download_file(file_info.file_path)
-            # Переводим файл
-            text, result = OtherTranslate(message.from_user.id, ).picture_translate(downloaded_file)
-
-            # Заканчиваем запрос
-            event.set()
-
-            bot.edit_message_text(f"Распознанный текст:\n\n{text}", message.chat.id, message.id + 1)
-            bot.send_message(message.chat.id, result, reply_markup=markup)
+        if int(server.usage_percentage) < 65 or not server_usage:
             try:
-                os.remove("translate.jpg")
-            except FileNotFoundError:
-                pass
-        except:
+
+                file_path = f'{database.code}.jpg'
+
+                markup = types.InlineKeyboardMarkup()
+                markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
+
+                # Скачиваем файл
+                file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
+                downloaded_file = bot.download_file(file_info.file_path)
+                # Переводим файл
+                text, result = OtherTranslate(message.from_user.id).picture_translate(downloaded_file, file_path)
+
+                # Заканчиваем запрос
+                event.set()
+
+                bot.edit_message_text(f"Распознанный текст:\n\n{text}", message.chat.id, message.id + 1)
+                bot.send_message(message.chat.id, result, reply_markup=markup)
+                try:
+                    os.remove(file_path)
+                except FileNotFoundError:
+                    pass
+            except:
+                # Заканчиваем запрос
+                event.set()
+
+                bot.edit_message_text("Произошла неизвестная ошибка. Повторите попытку", message.chat.id, message.id + 1)
+        else:
             # Заканчиваем запрос
             event.set()
 
-            bot.edit_message_text("Произошла неизвестная ошибка. Повторите попытку", message.chat.id, message.id + 1)
-    else:
-        # Заканчиваем запрос
-        event.set()
-
-        bot.edit_message_text(
-            f"Сервер перегружен. Пожалуйста повторите попытку через {Translate().translate(server.resets_text, 'ru')[5:]}",
-            message.chat.id, message.id + 1)
+            bot.edit_message_text(
+                f"Сервер перегружен. Пожалуйста повторите попытку через {Translate().translate(server.resets_text, 'ru', prefix=False)}",
+                message.chat.id, message.id + 1)
 
 
 # Message from user for translation
 @bot.message_handler(content_types=["text"])
 def handler_text(message):
     database = Database(message.from_user.id)
+    if not database.expectation:
+        # Поиск включен
+        if database.search:
+            try:
+                bot.send_message(message.chat.id, 'Язык найден:', reply_markup=InlineButton().inline_button(
+                    InlineButton().language_page(message.from_user.id, message.text.title())))
+                database.save(search=False)
+            except KeyError:
+                bot.send_message(message.chat.id,
+                                 'Данного языка еще нету в боте. Пожалуйста попробуйте снова или напишите /search чтобы выключить поиск.')
 
-    # Поиск включен
-    if database.search:
-        try:
-            bot.send_message(message.chat.id, 'Язык найден:', reply_markup=InlineButton().inline_button(
-                InlineButton().language_page(message.from_user.id, message.text.title())))
-            database.save(search=False)
-        except KeyError:
-            bot.send_message(message.chat.id,
-                             'Данного языка еще нету в боте. Пожалуйста попробуйте снова или напишите /search чтобы выключить поиск.')
-
-    else:
-        bot.send_message(message.chat.id, 'Подождите...')
-        translate = Translate()
-        auto_spelling = AutoSpelling()
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
-        # Перевод с проверкой орфографии
-        if database.spelling:
-            # Проверяем ошибки в тексте
-            auto_spelling.auto_spelling(message.text.strip(), database.language)
-            if auto_spelling.errors_found:
-                # Если ошибки найдены
-                bot.edit_message_text(auto_spelling.spelling_text, message.chat.id, message.id + 1,
-                                      parse_mode="Markdown")
-                bot.send_message(message.chat.id, auto_spelling.result, reply_markup=markup)
-            else:
-                bot.edit_message_text(auto_spelling.result, message.chat.id, message.id + 1, reply_markup=markup)
         else:
-            # Обычный перевод
-            bot.edit_message_text(translate.translate(message.text.strip(), database.language), message.chat.id,
-                                  message.id + 1, reply_markup=markup)
+            bot.send_message(message.chat.id, 'Подождите...')
+            translate = Translate()
+            auto_spelling = AutoSpelling()
+            markup = types.InlineKeyboardMarkup()
+            markup.add(types.InlineKeyboardButton("Озвучить", callback_data='voice'))
+            # Перевод с проверкой орфографии
+            if database.spelling:
+                # Проверяем ошибки в тексте
+                auto_spelling.auto_spelling(message.text.strip(), database.language)
+                if auto_spelling.errors_found:
+                    # Если ошибки найдены
+                    bot.edit_message_text(auto_spelling.spelling_text, message.chat.id, message.id + 1,
+                                          parse_mode="Markdown")
+                    bot.send_message(message.chat.id, auto_spelling.result, reply_markup=markup)
+                else:
+                    bot.edit_message_text(auto_spelling.result, message.chat.id, message.id + 1, reply_markup=markup)
+            else:
+                # Обычный перевод
+                bot.edit_message_text(translate.translate(message.text.strip(), database.language), message.chat.id,
+                                      message.id + 1, reply_markup=markup)
 
 
 bot.polling(none_stop=True, interval=0, timeout=25)
