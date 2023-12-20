@@ -19,7 +19,7 @@ data = Data()
 
 def timer():
     data.upload_timer = False
-    time.sleep(120)
+    time.sleep(300)
     data.upload_timer = True
 
 
@@ -113,19 +113,23 @@ class Database:
 
         connect.close()
 
-    def save(self, **kwargs):
+    def save(self, upl=True, **kwargs):
         # Сохранение данных в базу
 
         connect = sqlite3.connect('translatebot.db')
         cursor = connect.cursor()
 
+        key_lst = []
+
         for key, value in kwargs.items():
+            key_lst.append(key)
             cursor.execute(f"UPDATE main SET {key} = ? WHERE id = ?", (value, self.user))
         connect.commit()
         connect.close()
 
         if server_usage:
-            if data.upload_timer:
+            if data.upload_timer and upl:
+                print(upl)
                 th = Thread(target=upload)
                 th.start()
 
