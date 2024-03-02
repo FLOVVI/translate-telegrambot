@@ -6,12 +6,13 @@ from threading import Thread, Event
 import telebot
 from telebot import types
 
-from config import token, server_usage
+from config import token, server_usage, owner_id
 from database import Database
 from language import InlineButton
 from translator import Translate, AutoSpelling
 from other_translate import OtherTranslate
 from server import server_load
+import analysis as an
 
 print("Active")
 bot = telebot.TeleBot(token)
@@ -22,13 +23,10 @@ def edit_message(chat_id, last_message_id, user, event):
     database = Database(user)
     server = server_load()
 
-    database.save(upl=False, expectation=True)
     for i in range(150):
         state = state + 1 if state < 3 else 0
 
         if event.is_set():
-            time.sleep(1)
-            database.save(upl=False, expectation=False)
             break
 
         if int(server.usage_percentage) >= 100:
@@ -57,6 +55,10 @@ def start(message):
             bot.send_message(message.chat.id, f"Вы переводите на {InlineButton().language_text(database.language)} язык",
                              reply_markup=markup)
 
+@bot.message_handler(commands=["an"])
+def analysis(message):
+    if message.from_user.id == owner_id:
+        bot.send_message(message.chat.id, f'Всего пользователей: {an.count_users()}\n{an.most_language()[1]}')
 
 # Удаление данных пользователя
 @bot.message_handler(commands=["delete"])
@@ -254,9 +256,7 @@ def handler_audio(message):
         th = Thread(target=edit_message, args=(message.chat.id, message.id + 1, message.from_user.id, event))
         th.start()
 
-        database = Database(message.from_user.id)
         file_path = database.code
-
         file_info = bot.get_file(message.voice.file_id)
         file_download = requests.get(f'https://api.telegram.org/file/bot{token}/{file_info.file_path}')
 

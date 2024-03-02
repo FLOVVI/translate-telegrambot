@@ -129,7 +129,6 @@ class Database:
 
         if server_usage:
             if data.upload_timer and upl:
-                print(upl)
                 th = Thread(target=upload)
                 th.start()
 
