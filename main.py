@@ -55,10 +55,12 @@ def start(message):
             bot.send_message(message.chat.id, f"Вы переводите на {InlineButton().language_text(database.language)} язык",
                              reply_markup=markup)
 
+
 @bot.message_handler(commands=["an"])
 def analysis(message):
     if message.from_user.id == owner_id:
         bot.send_message(message.chat.id, f'Всего пользователей: {an.count_users()}\n{an.most_language()[1]}')
+
 
 # Удаление данных пользователя
 @bot.message_handler(commands=["delete"])
@@ -153,7 +155,7 @@ def callback_query(call):
             bot.answer_callback_query(call.id, 'Следующая страница')
             page = page + 1 if page < inline.max_page else 1
 
-        if req == 'back':
+        elif req == 'back':
             bot.answer_callback_query(call.id, 'Предыдущая страница')
             page = page - 1 if page > 1 else inline.max_page
 
@@ -330,7 +332,7 @@ def handler_photo(message):
 
         server = server_load()
 
-        if int(server.usage_percentage) < 150 or not server_usage:
+        if int(server.usage_percentage) < 65 or not server_usage:
             try:
 
                 file_path = f'{database.code}.jpg'
