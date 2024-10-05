@@ -6,7 +6,6 @@ import config
 
 
 class DatabaseCloud:
-
     def __init__(self, token):
         self.disk = yadisk.YaDisk(token=token)
 
@@ -36,16 +35,13 @@ if config.SERVER_USAGE:
 def upload():
     # Получаем текущее время
     now = datetime.datetime.now()
-    for i in range(10**10):
-        # Проверяем, делится ли количество часов от начала суток на 6
-        if now.hour % 3 == 0:
-            print("Сейчас начало 3 часа! Запуск скрипта...")
-            try:
-                cloud.upload('translatebot.db', 'translatebot.db')
-            except:
-                cloud.upload('translatebot.db', 'translatebot.db', remove=False)
-            print("Данные загружены на облако")
-            break
+    # Проверяем, время делится на 6?
+    if now.hour % 6 == 0:
+        try:
+            cloud.upload('translatebot.db', 'translatebot.db')
+        except:
+            cloud.upload('translatebot.db', 'translatebot.db', remove=False)
+        print("Данные загружены на облако")
 
 
 cloud_upload = Thread(target=upload)
