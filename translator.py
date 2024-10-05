@@ -1,5 +1,7 @@
 from googletrans import Translator
 from pyaspeller import YandexSpeller
+from database import Database
+from gtts import gTTS
 
 
 class Translate:
@@ -56,3 +58,18 @@ class AutoSpelling(Translate):
         for i in new_mas:
             corrected_text[corrected_text.index(i)] = f"`{i}`"
         return " ".join(corrected_text)
+
+
+class OtherTranslate:
+    def __init__(self, user):
+        self.database = Database(user)
+        self.translate = Translate()
+        self.auto_spelling = AutoSpelling()
+
+    def message_voice(self, text, file_path):
+        lang = self.translate.detect(text).lang
+
+        tts = gTTS(text=text, lang=lang)
+        tts.save(f'{file_path}.ogg')
+
+        return f'{file_path}.ogg'

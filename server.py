@@ -1,4 +1,4 @@
-from config import request_login, request_password
+import config
 from dataclasses import dataclass
 
 from bs4 import BeautifulSoup as bs
@@ -15,8 +15,8 @@ headers = {
 
 data = {
     "csrfmiddlewaretoken": '',
-    "auth-username": request_login,
-    "auth-password": request_password,
+    "auth-username": config.REQUEST_LOGIN,
+    "auth-password": config.REQUEST_PASSWORD,
     "login_view-current_step": "auth"
 }
 

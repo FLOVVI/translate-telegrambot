@@ -1,8 +1,8 @@
 import sqlite3
-import random, time, os
+import random, datetime, os
 import yadisk
 from threading import Thread
-from config import yadisk_token, server_usage
+import config
 
 
 class DatabaseCloud:
@@ -26,33 +26,30 @@ class DatabaseCloud:
         self.disk.remove(f'database/{disk_file}')
 
 
-cloud = DatabaseCloud(yadisk_token)
-if server_usage:
+cloud = DatabaseCloud(config.YADISK_TOKEN)
+if config.SERVER_USAGE:
     cloud.download('translatebot.db', 'translatebot.db')
     print('База данных установлена.')
 
 
-class Data:
-    upload_timer = True
-
-data = Data()
-
-
-def timer():
-    data.upload_timer = False
-    time.sleep(300)
-    data.upload_timer = True
-
-
+# Каждые 3 часа база данных сохраняется в облако
 def upload():
+    # Получаем текущее время
+    now = datetime.datetime.now()
+    for i in range(10**10):
+        # Проверяем, делится ли количество часов от начала суток на 6
+        if now.hour % 3 == 0:
+            print("Сейчас начало 3 часа! Запуск скрипта...")
+            try:
+                cloud.upload('translatebot.db', 'translatebot.db')
+            except:
+                cloud.upload('translatebot.db', 'translatebot.db', remove=False)
+            print("Данные загружены на облако")
+            break
 
-    th = Thread(target=timer)
-    th.start()
 
-    try:
-        cloud.upload('translatebot.db', 'translatebot.db')
-    except:
-        cloud.upload('translatebot.db', 'translatebot.db', remove=False)
+cloud_upload = Thread(target=upload)
+cloud_upload.start()
 
 
 class Add:
@@ -71,28 +68,6 @@ class Add:
                 break
         return code
 
-    @staticmethod
-    def search_table():
-        # Проверяем наличие таблицы
-        connect = sqlite3.connect('translatebot.db')
-        cursor = connect.cursor()
-
-        check = cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' and name='main'"
-        )
-
-        # Если таблицы не существует - создаем её
-        if check.fetchone() is None:
-            cursor.execute("CREATE TABLE main ("
-                           "id INT PRIMARY KEY,"
-                           "language STRING,"
-                           "spelling BOOLEAN,"
-                           "first_start BOOLEAN,"
-                           "page INT,"
-                           "code STRING,"
-                           "search BOOLEAN,"
-                           "expectation BOOLEAN)"
-                           )
 
     def search_user(self, user):
 
@@ -113,28 +88,23 @@ class Add:
 
 
 class Database:
-    def __init__(self, user, delete=False):
+    def __init__(self, user):
         self.user = user
-        if not delete:
-            Add().search_user(self.user)
+        Add().search_user(self.user)
 
         connect = sqlite3.connect('translatebot.db')
         cursor = connect.cursor()
 
-        self.delete_user = True if cursor.execute("SELECT id FROM main WHERE id = ?",
-                                                  (self.user,)).fetchone() is None else False
-        if not self.delete_user:
-            self.language = cursor.execute(f'SELECT language FROM main WHERE id = {self.user}').fetchone()[0]
-            self.spelling = cursor.execute(f'SELECT spelling FROM main WHERE id = {self.user}').fetchone()[0]
-            self.first_start = cursor.execute(f'SELECT first_start FROM main WHERE id = {self.user}').fetchone()[0]
-            self.page = cursor.execute(f'SELECT page FROM main WHERE id = {self.user}').fetchone()[0]
-            self.code = cursor.execute(f'SELECT code FROM main WHERE id = {self.user}').fetchone()[0]
-            self.search = cursor.execute(f'SELECT search FROM main WHERE id = {self.user}').fetchone()[0]
-            self.expectation = cursor.execute(f'SELECT expectation FROM main WHERE id = {self.user}').fetchone()[0]
+        self.language = cursor.execute(f'SELECT language FROM main WHERE id = {self.user}').fetchone()[0]
+        self.spelling = cursor.execute(f'SELECT spelling FROM main WHERE id = {self.user}').fetchone()[0]
+        self.first_start = cursor.execute(f'SELECT first_start FROM main WHERE id = {self.user}').fetchone()[0]
+        self.page = cursor.execute(f'SELECT page FROM main WHERE id = {self.user}').fetchone()[0]
+        self.code = cursor.execute(f'SELECT code FROM main WHERE id = {self.user}').fetchone()[0]
+        self.search = cursor.execute(f'SELECT search FROM main WHERE id = {self.user}').fetchone()[0]
 
         connect.close()
 
-    def save(self, upl=True, **kwargs):
+    def save(self, **kwargs):
         # Сохранение данных в базу
 
         connect = sqlite3.connect('translatebot.db')
@@ -147,24 +117,3 @@ class Database:
             cursor.execute(f"UPDATE main SET {key} = ? WHERE id = ?", (value, self.user))
         connect.commit()
         connect.close()
-
-        if server_usage:
-            if data.upload_timer and upl:
-                th = Thread(target=upload)
-                th.start()
-
-    def delete(self):
-        # Удаление всех данных из базы
-
-        connect = sqlite3.connect('translatebot.db')
-        cursor = connect.cursor()
-        cursor.execute("DELETE FROM main WHERE id = ?", (self.user,))
-        connect.commit()
-        connect.close()
-
-        if server_usage:
-            if data.upload_timer:
-                th = Thread(target=upload)
-                th.start()
-
-Add().search_table()
