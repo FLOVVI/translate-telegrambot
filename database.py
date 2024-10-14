@@ -14,8 +14,9 @@ class DatabaseCloud:
             self.remove(disk_file)
         self.disk.upload(user_file, f'database/{disk_file}')
 
-    def download(self, user_file, disk_file):
-        os.remove(user_file)
+    def download(self, user_file, disk_file, remove=True):
+        if remove:
+            os.remove(user_file)
         self.disk.download(f'database/{disk_file}', user_file)
 
     def listdir(self):
@@ -24,16 +25,17 @@ class DatabaseCloud:
     def remove(self, disk_file):
         self.disk.remove(f'database/{disk_file}')
 
-
 cloud = DatabaseCloud(config.YADISK_TOKEN)
 if config.SERVER_USAGE:
-    cloud.download('translatebot.db', 'translatebot.db')
+    try:
+        cloud.download('translatebot.db', 'translatebot.db')
+    except:
+        cloud.download('translatebot.db', 'translatebot.db', remove=False)
     print('База данных установлена.')
 
 
-# Каждые 3 часа база данных сохраняется в облако
+# Каждые 6 часов база данных сохраняется в облако
 def upload():
-    # Получаем текущее время
     now = datetime.datetime.now()
     # Проверяем, время делится на 6?
     if now.hour % 6 == 0:
