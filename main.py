@@ -11,7 +11,6 @@ import analysis
 from database import Database
 from language import InlineButton
 from translator import Translate, AutoSpelling, OtherTranslate
-from server import server_load
 
 
 print("Active")
@@ -21,7 +20,6 @@ bot.send_message(config.OWNER_ID, "Сервер запущен")
 
 def edit_message(chat_id, last_message_id, user, event):
     state = 0
-    server = server_load()
 
     for i in range(300):
         state = state + 1 if state < 3 else 0
@@ -29,11 +27,7 @@ def edit_message(chat_id, last_message_id, user, event):
         if event.is_set():
             break
 
-        if int(server.usage_percentage) >= 90:
-            text = f"Сервер перегружен. Ответ займет больше времени\n\n" \
-                   f"{'⏳' if state % 2 == 0 else '⌛'}Подождите{'.' * state}"
-        else:
-            text = f"{'⏳' if state % 2 == 0 else '⌛'}Подождите{'.' * state}"
+        text = f"{'⏳' if state % 2 == 0 else '⌛'}Подождите{'.' * state}"
 
         bot.edit_message_text(text, chat_id, last_message_id)
         time.sleep(0.7)
@@ -60,9 +54,6 @@ def analysis(message):
     if message.from_user.id == config.OWNER_ID:
         bot.send_message(message.chat.id,
                          f'Всего пользователей: {analysis.count_users()}\n{analysis.most_language()[1]}')
-        bot.send_message(message.chat.id, f'{server_load().usage_percentage=}\n'
-                                          f'{server_load().usage_second=}/{server_load().usage_max_second}'
-                                          f'{server_load().resets_text}')
 
 
 # Включить/отключить автоматическую проверку текста
