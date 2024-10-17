@@ -6,9 +6,9 @@ import telebot
 from telebot import types
 
 import config
+from database import Database
 import analysis
 
-from database import Database
 from language import InlineButton
 from translator import Translate, AutoSpelling, OtherTranslate
 
